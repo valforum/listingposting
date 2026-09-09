@@ -83,6 +83,7 @@ textarea{resize:vertical;min-height:70px}
 .bprow .act{flex:1;color:var(--ink-dim);font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .bprow .flag{flex:none;font-size:13px;width:16px;text-align:center}
 .bprow input.unknown{border-color:var(--warn)}
+.bprow input[type=checkbox]{flex:none;width:15px;height:15px;min-width:0;accent-color:var(--red)}
 
 /* templates */
 .tpl{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;font-size:12.5px;line-height:1.55;min-height:300px;white-space:pre;overflow-x:auto}
@@ -182,7 +183,7 @@ textarea{resize:vertical;min-height:70px}
 
     <div class="card">
       <h2>3. Battle Pass <em id="bpCount"></em></h2>
-      <p class="hint" style="margin:0 0 10px">Isi nama tema di kiri; hasilnya jadi <code>Tema (ACT)</code>. Nama tersimpan, jadi act yang sama tidak perlu diisi ulang.</p>
+      <p class="hint" style="margin:0 0 10px">Hanya pass yang dicentang Max yang masuk caption. Centangnya diisi otomatis dari ada tidaknya melee pass itu di inventory, dan bisa Anda ubah manual.</p>
       <div class="list" id="bpList" style="max-height:240px"><div class="empty">Belum ada file.</div></div>
       <div style="margin-top:12px">
         <label for="bpExtra">Tambah BP manual — satu per baris</label>
@@ -535,6 +536,7 @@ function apply(d, filename){
   fillAgents();
 
   bpActs = (inv.battlepasses || []).map(function(b){ return b.name; });
+  bpMax = {};
   renderBP();
 
   buildRankChips(d.competitive_tiers || []);
@@ -730,6 +732,19 @@ function sortSelected(){
 }
 
 /* ---------- battle pass rows ---------- */
+/* Battle pass dianggap Max kalau akun punya melee dari tema pass itu —
+   melee ada di tier terakhir, jadi memilikinya berarti pass-nya tamat. */
+var bpMax = {};
+function bpMeleeOf(theme){
+  if(!theme) return null;
+  var hit = allSkins.filter(function(s){
+    return s.name.length > theme.length &&
+           s.name.slice(0, theme.length + 1).toLowerCase() === (theme + " ").toLowerCase() &&
+           isMelee(s.name);
+  })[0];
+  return hit ? hit.name : null;
+}
+
 function renderBP(){
   var box = $("bpList");
   box.innerHTML = "";
@@ -743,41 +758,54 @@ function renderBP(){
     var row = document.createElement("div");
     row.className = "bprow";
 
-    var num = document.createElement("span");
-    num.className = "num"; num.textContent = (i + 1) + ".";
-
     var key = canonKey(act);
+
+    var cb = document.createElement("input");
+    cb.type = "checkbox";
+    cb.title = "Centang = pass ini Max dan ikut masuk caption";
+
     var inp = document.createElement("input");
     inp.value = bpDict[key] || "";
     inp.placeholder = "nama tema";
     inp.setAttribute("list", "families");
-    if(!inp.value) inp.classList.add("unknown");
 
     var flag = document.createElement("span");
     flag.className = "flag";
 
     var actEl = document.createElement("span");
-    actEl.className = "act"; actEl.textContent = act;
+    actEl.className = "act";
 
     function check(){
       var v = inp.value.trim();
       inp.classList.toggle("unknown", !v);
+      var melee = bpMeleeOf(v);
+
+      // Status Max ditentukan otomatis sekali, setelah itu ikut pilihan manual.
+      if(bpMax[act] === undefined) bpMax[act] = !!melee;
+      cb.checked = !!bpMax[act];
+      row.style.opacity = bpMax[act] ? "1" : ".45";
+
+      actEl.textContent = act + (melee ? "  ·  " + melee : "");
       if(!v){ flag.textContent = ""; flag.title = ""; return; }
-      var owned = Object.keys(families).some(function(f){
-        return f.toLowerCase() === v.toLowerCase();
-      });
-      flag.textContent = owned ? "" : "⚠";
+      flag.textContent = melee ? "" : "⚠";
       flag.style.color = "var(--warn)";
-      flag.title = owned ? "" : "Tidak ada skin dengan nama ini di inventory — cek lagi.";
+      flag.title = melee ? "" : "Tidak ada melee " + v + " di inventory — pass ini kemungkinan belum Max.";
     }
+
+    cb.addEventListener("change", function(){
+      bpMax[act] = cb.checked;
+      row.style.opacity = cb.checked ? "1" : ".45";
+      build(); updateBpCount();
+    });
     inp.addEventListener("input", function(){
       var v = inp.value.trim();
       if(v) bpDict[key] = v; else delete bpDict[key];
-      check(); save("caption:bpdict", bpDict); syncPush(); build();
+      delete bpMax[act];              // nama tema berubah, hitung ulang otomatis
+      check(); save("caption:bpdict", bpDict); syncPush(); build(); updateBpCount();
     });
     check();
 
-    row.appendChild(num); row.appendChild(inp); row.appendChild(flag); row.appendChild(actEl);
+    row.appendChild(cb); row.appendChild(inp); row.appendChild(flag); row.appendChild(actEl);
     box.appendChild(row);
   });
 
@@ -788,8 +816,13 @@ function renderBP(){
   });
   if(!$("families")) document.body.appendChild(dl);
 
-  var filled = bpActs.filter(function(a){ return bpDict[canonKey(a)]; }).length;
-  $("bpCount").textContent = "— " + filled + " dari " + bpActs.length + " sudah dinamai";
+  updateBpCount();
+}
+
+function updateBpCount(){
+  if(!bpActs.length){ $("bpCount").textContent = ""; return; }
+  var max = bpActs.filter(function(a){ return bpMax[a]; }).length;
+  $("bpCount").textContent = "— " + max + " dari " + bpActs.length + " Max";
 }
 
 /* ---------- rank ---------- */
@@ -972,7 +1005,7 @@ function thousands(x){
 }
 
 function bpLines(){
-  var out = bpActs.map(function(act){
+  var out = bpActs.filter(function(act){ return bpMax[act]; }).map(function(act){
     var theme = bpDict[canonKey(act)];
     return theme ? theme + " (" + act + ")" : act;
   });
@@ -1028,8 +1061,6 @@ function build(){
   $("capB").textContent = b;
   $("countA").textContent = a.length + " karakter";
   $("countB").textContent = b.length + " karakter";
-  var filled = bpActs.filter(function(x){ return bpDict[canonKey(x)]; }).length;
-  if(bpActs.length) $("bpCount").textContent = "— " + filled + " dari " + bpActs.length + " sudah dinamai";
 }
 
 /* ---------- template editor ---------- */
