@@ -59,6 +59,7 @@ textarea{resize:vertical;min-height:70px}
 .tag.Ultra{background:var(--t-ultra)}.tag.Exclusive{background:var(--t-exclusive)}
 .tag.Premium{background:var(--t-premium)}.tag.Deluxe{background:var(--t-deluxe)}
 .tag.Select{background:var(--t-select)}.tag.Custom{background:var(--ink-dim)}
+.tag.bp{background:transparent;color:var(--ink-dim);border:1px solid var(--line)}
 .empty{padding:14px;color:var(--ink-dim);font-size:13px}
 .pick{display:flex;align-items:center;gap:8px;padding:5px 10px;border-bottom:1px solid #22303D;font-size:14px}
 .pick .num{color:var(--ink-dim);font-variant-numeric:tabular-nums;width:22px;flex:none;text-align:right}
@@ -452,6 +453,7 @@ var PLACEHOLDERS = [
 
 var $ = function(id){ return document.getElementById(id); };
 var allSkins = [], selected = [], tierFilter = {}, ownedAgents = null;
+var selectionTouched = false;
 var bpActs = [];        // act names from the file, in order
 var bpDict = {};        // ACT -> theme
 var families = {};      // family name -> count, from inventory
@@ -523,7 +525,12 @@ function apply(d, filename){
     var t = TIERS.indexOf(a.tier) - TIERS.indexOf(b.tier);
     return t !== 0 ? t : a.name.localeCompare(b.name);
   });
-  selected = allSkins.filter(function(s){ return DEFAULT_ON[s.tier]; }).map(function(s){ return s.name; });
+  bpActs = (inv.battlepasses || []).map(function(b){ return b.name; });
+  selectionTouched = false;
+  rebuildBpSkins();
+  selected = allSkins
+    .filter(function(s){ return DEFAULT_ON[s.tier] && !bpSkins[s.name]; })
+    .map(function(s){ return s.name; });
   sortSelected();
 
   buildFamilies();
@@ -535,7 +542,6 @@ function apply(d, filename){
   ownedAgents = (inv.agents || []).length;
   fillAgents();
 
-  bpActs = (inv.battlepasses || []).map(function(b){ return b.name; });
   bpMax = {};
   renderBP();
 
@@ -624,7 +630,7 @@ function loadBundleNames(){
 function loadSkinData(){
   load("caption:skins", function(c){
     if(c && c.map && c.t && (Date.now() - c.t) < 30 * 864e5){
-      SKIN_THEME = c.map; THEME_SIZE = c.size; renderPicked(); build();
+      SKIN_THEME = c.map; THEME_SIZE = c.size; afterSkinData();
     }
   });
   if(typeof fetch !== "function") return;
@@ -641,9 +647,19 @@ function loadSkinData(){
       if(!Object.keys(map).length) return;
       SKIN_THEME = map; THEME_SIZE = size;
       save("caption:skins", {t: Date.now(), map: map, size: size});
-      renderPicked(); build();
+      afterSkinData();
     })
     .catch(function(){});
+}
+
+// Data tema bisa datang setelah file di-upload; hitung ulang saat itu terjadi.
+function afterSkinData(){
+  if(bpActs.length){
+    rebuildBpSkins();
+    if(!selectionTouched) pruneBpSkins();
+  }
+  if(typeof renderSkins === "function" && allSkins.length){ renderSkins(); renderBP(); }
+  renderPicked(); build();
 }
 
 function bundleOf(skin){
@@ -732,17 +748,46 @@ function sortSelected(){
 }
 
 /* ---------- battle pass rows ---------- */
-/* Battle pass dianggap Max kalau akun punya melee dari tema pass itu —
-   melee ada di tier terakhir, jadi memilikinya berarti pass-nya tamat. */
 var bpMax = {};
+
+function startsWithTheme(name, theme){
+  return name.length > theme.length &&
+         name.slice(0, theme.length + 1).toLowerCase() === (theme + " ").toLowerCase();
+}
+
+/* Isi sebuah battle pass dicari lewat themeUuid, bukan nama depan, karena
+   sebagian melee pass namanya lepas dari nama temanya — Heartstopper
+   melee-nya "Heart Splitter". Kalau data tema belum termuat, jatuh ke
+   pencocokan nama depan. */
+function bpSkinsOf(theme){
+  if(!theme) return [];
+  var seed = allSkins.filter(function(s){ return startsWithTheme(s.name, theme); });
+  var uuid = seed.length ? SKIN_THEME[seed[0].name] : null;
+  if(!uuid) return seed.map(function(s){ return s.name; });
+  return allSkins.filter(function(s){ return SKIN_THEME[s.name] === uuid; })
+                 .map(function(s){ return s.name; });
+}
+
+/* Pass dianggap Max kalau akun punya melee dari tema pass itu —
+   melee ada di tier terakhir, jadi memilikinya berarti pass-nya tamat. */
 function bpMeleeOf(theme){
-  if(!theme) return null;
-  var hit = allSkins.filter(function(s){
-    return s.name.length > theme.length &&
-           s.name.slice(0, theme.length + 1).toLowerCase() === (theme + " ").toLowerCase() &&
-           isMelee(s.name);
-  })[0];
-  return hit ? hit.name : null;
+  var hit = bpSkinsOf(theme).filter(isMelee)[0];
+  return hit || null;
+}
+
+/* Semua skin yang berasal dari battle pass milik akun ini. Skin begini
+   tidak ikut daftar jualan karena bukan bundle beli. */
+var bpSkins = {};
+function rebuildBpSkins(){
+  bpSkins = {};
+  bpActs.forEach(function(act){
+    bpSkinsOf(bpDict[canonKey(act)]).forEach(function(n){ bpSkins[n] = 1; });
+  });
+}
+function pruneBpSkins(){
+  var before = selected.length;
+  selected = selected.filter(function(n){ return !bpSkins[n]; });
+  return selected.length !== before;
 }
 
 function renderBP(){
@@ -753,6 +798,7 @@ function renderBP(){
     $("bpCount").textContent = "";
     return;
   }
+  rebuildBpSkins();
   var opts = familyList();
   bpActs.forEach(function(act, i){
     var row = document.createElement("div");
@@ -801,7 +847,10 @@ function renderBP(){
       var v = inp.value.trim();
       if(v) bpDict[key] = v; else delete bpDict[key];
       delete bpMax[act];              // nama tema berubah, hitung ulang otomatis
-      check(); save("caption:bpdict", bpDict); syncPush(); build(); updateBpCount();
+      check(); save("caption:bpdict", bpDict); syncPush();
+      rebuildBpSkins();
+      if(!selectionTouched) pruneBpSkins();
+      renderSkins(); renderPicked(); build(); updateBpCount();
     });
     check();
 
@@ -894,6 +943,7 @@ function renderSkins(){
     var cb = document.createElement("input"); cb.type = "checkbox";
     cb.checked = selected.indexOf(s.name) >= 0;
     cb.addEventListener("change", function(){
+      selectionTouched = true;
       if(cb.checked){ if(selected.indexOf(s.name) < 0) insertSelected(s.name); }
       else selected = selected.filter(function(n){ return n !== s.name; });
       renderPicked(); build();
@@ -901,6 +951,12 @@ function renderSkins(){
     var tag = document.createElement("span"); tag.className = "tag " + s.tier; tag.textContent = s.tier;
     var nm = document.createElement("span"); nm.textContent = s.name;
     lab.appendChild(cb); lab.appendChild(tag); lab.appendChild(nm);
+    if(bpSkins[s.name]){
+      var bp = document.createElement("span");
+      bp.className = "tag bp"; bp.textContent = "BP";
+      bp.title = "Skin battle pass — biasanya tidak ikut daftar jualan";
+      lab.appendChild(bp);
+    }
     row.appendChild(lab); box.appendChild(row);
   });
   updateCount();
@@ -985,13 +1041,14 @@ function swap(a,b){ var t = selected[a]; selected[a] = selected[b]; selected[b] 
 $("search").addEventListener("input", renderSkins);
 $("sortMode").addEventListener("change", renderSkins);
 $("checkVisible").addEventListener("click", function(){
+  selectionTouched = true;
   visibleSkins().forEach(function(s){ if(selected.indexOf(s.name) < 0) insertSelected(s.name); });
   renderSkins(); renderPicked(); build();
 });
 $("resortSel").addEventListener("click", function(){
   sortSelected(); renderPicked(); build();
 });
-$("clearSel").addEventListener("click", function(){ selected = []; renderSkins(); renderPicked(); build(); });
+$("clearSel").addEventListener("click", function(){ selectionTouched = true; selected = []; renderSkins(); renderPicked(); build(); });
 $("sameprice").addEventListener("click", function(e){
   e.preventDefault(); $("hargaB").value = $("hargaA").value; build();
 });
