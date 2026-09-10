@@ -546,10 +546,7 @@ function apply(d, filename){
   bpActs = (inv.battlepasses || []).map(function(b){ return String(b.name || "").trim(); });
   selectionTouched = false;
   rebuildBpSkins();
-  selected = allSkins
-    .filter(function(s){ return DEFAULT_ON[s.tier] && !bpSkins[s.name]; })
-    .map(function(s){ return s.name; });
-  sortSelected();
+  applyDefaultSelection();
 
   buildFamilies();
 
@@ -692,9 +689,11 @@ function afterSkinData(){
   if(rawPasses.length && !BP_PASSES.length && Object.keys(LVL_SKIN).length){
     rebuildPasses(null); return;
   }
-  if(bpActs.length){
+  if(allSkins.length){
     rebuildBpSkins();
-    if(!selectionTouched) pruneBpSkins();
+    // Data BP sering datang setelah file dibaca; susun ulang pilihan default
+    // selama pengguna belum menyentuhnya sendiri.
+    if(!selectionTouched) applyDefaultSelection();
   }
   if(typeof renderSkins === "function" && allSkins.length){ renderSkins(); renderBP(); }
   renderPicked(); build();
@@ -925,11 +924,7 @@ function rebuildBpSkins(){
     bpSkinsOf(bpDict[canonKey(act)]).forEach(function(n){ bpSkins[n] = 1; });
   });
 }
-function pruneBpSkins(){
-  var before = selected.length;
-  selected = selected.filter(function(n){ return !bpSkins[n]; });
-  return selected.length !== before;
-}
+
 
 function renderBP(){
   var box = $("bpList");
@@ -994,7 +989,7 @@ function renderBP(){
       delete bpMax[act];              // nama tema berubah, hitung ulang otomatis
       check(); save("caption:bpdict", bpUser); syncPush();
       rebuildBpSkins();
-      if(!selectionTouched) pruneBpSkins();
+      if(!selectionTouched) applyDefaultSelection();
       renderSkins(); renderPicked(); build(); updateBpCount();
     });
     check();
@@ -1173,6 +1168,18 @@ function pickRow(name, n){
   rm.classList.add("x");
   [num, tag, nm, up, dn, rm].forEach(function(el){ row.appendChild(el); });
   return row;
+}
+
+/* Semua skin beli dicentang, skin battle pass tidak. Kalau data contract
+   belum termuat, jatuh ke aturan lama berbasis tier supaya skin BP tidak
+   ikut tercentang ramai-ramai. */
+function applyDefaultSelection(){
+  var haveBpData = Object.keys(BP_SKIN_ALL).length > 0;
+  selected = allSkins.filter(function(s){
+    if(bpSkins[s.name]) return false;
+    return haveBpData ? true : DEFAULT_ON[s.tier];
+  }).map(function(s){ return s.name; });
+  sortSelected();
 }
 
 function updateCount(){ $("skinCount").textContent = "— " + selected.length + " dipilih dari " + allSkins.length; }
