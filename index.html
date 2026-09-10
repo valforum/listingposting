@@ -522,14 +522,19 @@ function read(file){
 function apply(d, filename){
   var acc = d.account || {}, det = d.details || {}, inv = d.inventory || {};
 
+  // Nama dari export kadang punya spasi nyasar di depan/belakang atau spasi ganda
+  // di tengah. Itu merusak urutan senjata dan pencocokan tema, jadi dirapikan dulu.
   allSkins = (inv.skins || []).map(function(s){
-    return { name:s.name, tier: TIERS.indexOf(s.tier) >= 0 ? s.tier : "Select" };
-  });
+    return {
+      name: String(s.name || "").trim().replace(/\s+/g, " "),
+      tier: TIERS.indexOf(s.tier) >= 0 ? s.tier : "Select"
+    };
+  }).filter(function(s){ return s.name; });
   allSkins.sort(function(a,b){
     var t = TIERS.indexOf(a.tier) - TIERS.indexOf(b.tier);
     return t !== 0 ? t : a.name.localeCompare(b.name);
   });
-  bpActs = (inv.battlepasses || []).map(function(b){ return b.name; });
+  bpActs = (inv.battlepasses || []).map(function(b){ return String(b.name || "").trim(); });
   selectionTouched = false;
   rebuildBpSkins();
   selected = allSkins
@@ -582,9 +587,10 @@ function fillAgents(){
 
 /* ---------- skin families (for BP suggestions) ---------- */
 function familyOf(name){
-  var parts = name.split(" ");
+  var words = String(name).trim().split(/\s+/);
+  var parts = words.slice();
   while(parts.length > 1 && CUT_WORDS.indexOf(parts[parts.length - 1]) >= 0) parts.pop();
-  return parts.length === name.split(" ").length ? null : parts.join(" ");
+  return parts.length === words.length ? null : parts.join(" ");
 }
 function buildFamilies(){
   families = {};
@@ -602,8 +608,8 @@ function familyList(){
 // Kata terakhir yang bukan nama senjata api dianggap melee, jadi Karambit,
 // Butterfly Knife, Blade, Wrench, dan sejenisnya otomatis masuk paling belakang.
 function weaponRank(name){
-  var last = String(name).split(" ").pop();
-  var i = WEAPONS.indexOf(last);
+  var parts = String(name).trim().split(/\s+/);
+  var i = WEAPONS.indexOf(parts[parts.length - 1]);
   return i >= 0 ? i : MELEE_RANK;
 }
 function isMelee(name){ return weaponRank(name) === MELEE_RANK; }
