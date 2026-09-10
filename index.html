@@ -165,7 +165,11 @@ textarea{resize:vertical;min-height:70px}
           <div class="chips" id="rankChips"></div></div>
 
         <div><label for="level">Level</label><input id="level" placeholder="335"></div>
-        <div><label for="totalAgents">Total agent di game</label><input id="totalAgents" value="30" inputmode="numeric"></div>
+        <div><label for="totalAgents">Agent di game <em>— total / bawaan</em></label>
+          <div style="display:flex;gap:8px">
+            <input id="totalAgents" value="30" inputmode="numeric" title="Jumlah agent yang ada di game">
+            <input id="baseAgents" value="5" inputmode="numeric" title="Agent gratis bawaan akun baru, tidak ikut terdata di file export">
+          </div></div>
         <div><label for="agentA"><b>Valjubel</b> · baris agent</label><input id="agentA" placeholder="Full Agent"></div>
         <div><label for="agentB"><b>Tokovalo</b> · baris agent</label><input id="agentB" placeholder="-7"></div>
         <div><label for="region">Region</label><input id="region" value="IDN"></div>
@@ -551,19 +555,30 @@ function apply(d, filename){
   var info = $("fileInfo");
   info.style.display = "block";
   info.innerHTML = "<b>" + esc(filename) + "</b> — " + esc(acc.nickname || det.nickname || "tanpa nama") +
-    " · level " + (det.level || acc.level || "?") + " · " + allSkins.length + " skin · " + ownedAgents + " agent";
+    " · level " + (det.level || acc.level || "?") + " · " + allSkins.length + " skin · " + ownedAgents + "+" + (parseInt($("baseAgents").value, 10) || 5) +
+    " = " + agentCount() + " agent";
   build();
 }
 function esc(s){ return String(s).replace(/[&<>]/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;"}[c]; }); }
 
+// File export hanya mendata agent yang di-unlock; 5 agent bawaan akun baru
+// tidak ikut tercatat, jadi ditambahkan sendiri.
+function agentCount(){
+  var base = parseInt($("baseAgents").value, 10);
+  if(isNaN(base)) base = 5;
+  return ownedAgents + base;
+}
 function fillAgents(){
   if(ownedAgents === null) return;
   var total = parseInt($("totalAgents").value, 10) || 30;
-  var missing = total - ownedAgents;
+  var have = agentCount();
+  var missing = total - have;
   if(missing <= 0){ $("agentA").value = "Full Agent"; $("agentB").value = "Full Agent"; }
-  else { $("agentA").value = ownedAgents + " Agent"; $("agentB").value = "-" + missing; }
+  else { $("agentA").value = have + " Agent"; $("agentB").value = "-" + missing; }
 }
-$("totalAgents").addEventListener("input", function(){ fillAgents(); build(); });
+["totalAgents","baseAgents"].forEach(function(id){
+  $(id).addEventListener("input", function(){ fillAgents(); build(); });
+});
 
 /* ---------- skin families (for BP suggestions) ---------- */
 function familyOf(name){
@@ -684,33 +699,50 @@ function commonPrefix(names){
 
 var groupOn = {};
 
-/* Bundle dikelompokkan hanya kalau akun punya SEMUA skin dari tema itu.
-   Kalau data tema belum termuat, tool jatuh ke pencocokan nama depan
-   dan bundle dibiarkan mati supaya tidak salah klaim lengkap. */
+// Nama-nama ini pasti bundle beli, jadi chip-nya selalu ditampilkan walau
+// akun cuma punya satu skin dan bundle-nya belum lengkap. Ditampilkan saja,
+// bukan dinyalakan — kelengkapan tetap yang menentukan nyala atau tidak.
+var ALWAYS_SHOW = /^(VCT|Champions)\b/i;
+
+function groupKeyOf(name){
+  return bundleOf(name) || SKIN_THEME[name] || familyOf(name) || null;
+}
+
+/* Bundle dinyalakan otomatis hanya kalau akun punya seluruh isinya,
+   dihitung dari jumlah skin per tema. Bundle satu skin ikut terhitung. */
 function detectGroups(){
   var byKey = {};
   selected.forEach(function(sk){
-    var key = SKIN_THEME[sk] || bundleOf(sk);
-    if(!key) return;
-    (byKey[key] = byKey[key] || []).push(sk);
+    var key = groupKeyOf(sk);
+    if(key) (byKey[key] = byKey[key] || []).push(sk);
   });
 
   var out = {};
   Object.keys(byKey).forEach(function(key){
     var items = byKey[key];
-    if(items.length < 2) return;
-
-    // Berapa skin dari tema ini yang dimiliki akun (bukan hanya yang dicentang)
-    var owned = allSkins.filter(function(s){
-      return (SKIN_THEME[s.name] || bundleOf(s.name)) === key;
-    }).length;
-    var total = THEME_SIZE[key] || 0;
-    var complete = total > 0 && owned >= total;
-
     var label = bundleOf(items[0]) || commonPrefix(items);
     if(!label) return;
 
-    out[key] = { label: label, items: items, owned: owned, total: total, complete: complete };
+    // Semua skin milik akun yang masuk kelompok yang sama
+    var owned = allSkins.filter(function(s){ return groupKeyOf(s.name) === key; })
+                        .map(function(s){ return s.name; });
+
+    // Ukuran bundle asli = jumlah skin dari tema-tema yang tercakup di kelompok ini
+    var themes = {};
+    owned.forEach(function(n){ if(SKIN_THEME[n]) themes[SKIN_THEME[n]] = 1; });
+    var total = Object.keys(themes).reduce(function(a, t){ return a + (THEME_SIZE[t] || 0); }, 0);
+
+    var complete = total > 0 && owned.length >= total;
+    var alwaysShow = ALWAYS_SHOW.test(label);
+
+    // Skin tunggal dari bundle yang belum lengkap tidak usah bikin chip,
+    // kecuali VCT / Champions yang sengaja tetap ditawarkan.
+    if(!complete && !alwaysShow && items.length < 2) return;
+
+    out[key] = {
+      label: label, items: items, owned: owned.length,
+      total: total, complete: complete
+    };
     if(groupOn[key] === undefined) groupOn[key] = complete;
   });
   return out;
@@ -977,8 +1009,10 @@ function renderPicked(){
       btn.type = "button";
       btn.textContent = g.label + " " + g.owned + (g.total ? "/" + g.total : "");
       btn.title = g.total
-        ? (g.complete ? "Bundle lengkap" : "Kurang " + (g.total - g.owned) + " skin dari bundle ini")
-        : "Jumlah isi bundle belum diketahui";
+        ? (g.complete
+            ? "Bundle lengkap — dikelompokkan"
+            : "Kurang " + (g.total - g.owned) + " skin, jadi masuk eceran. Klik kalau tetap mau dikelompokkan.")
+        : "Jumlah isi bundle belum diketahui — putuskan manual";
       btn.setAttribute("aria-pressed", String(!!groupOn[k]));
       btn.addEventListener("click", function(){
         groupOn[k] = !groupOn[k]; renderPicked(); build();
@@ -1277,7 +1311,7 @@ function syncPush(){
 }
 
 /* ---------- pengaturan umum ---------- */
-var PREF_KEYS = ["region","totalAgents"];
+var PREF_KEYS = ["region","totalAgents","baseAgents"];
 function savePrefs(){
   var o = {}; PREF_KEYS.forEach(function(k){ o[k] = $(k).value; });
   save("caption:prefs", o);
