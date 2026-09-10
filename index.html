@@ -374,6 +374,13 @@ function canonKey(act){
     if(s.indexOf(EPISODES[i]) >= 0){ era = EPISODES[i]; break; }
   }
   if(!era){
+    var ep = s.match(/EPISODE\s+([0-9]+|[IVX]+)/);
+    if(ep){
+      var en = /^[0-9]+$/.test(ep[1]) ? parseInt(ep[1], 10) : ROMAN[ep[1]];
+      if(en && EPISODES[en - 1]) era = EPISODES[en - 1];
+    }
+  }
+  if(!era){
     var head = s.slice(0, s.indexOf(m[0]));
     var y = head.match(/20(2[5-9]|3[0-9])(?![0-9])/) || head.match(/(2[5-9]|3[0-9])(?![0-9])/);
     if(y) era = "S20" + y[1];
@@ -459,7 +466,9 @@ var $ = function(id){ return document.getElementById(id); };
 var allSkins = [], selected = [], tierFilter = {}, ownedAgents = null;
 var selectionTouched = false;
 var bpActs = [];        // act names from the file, in order
-var bpDict = {};        // ACT -> theme
+var bpDict = {};        // hasil gabungan: seed < contract < isian manual
+var bpUser = {};        // isian manual, ini yang disimpan & disinkronkan
+var bpContract = {};    // hasil baca /v1/contracts
 var families = {};      // family name -> count, from inventory
 var activeStore = "A", tplStore = "A";
 TIERS.forEach(function(t){ tierFilter[t] = true; });
@@ -619,6 +628,9 @@ function isMelee(name){ return weaponRank(name) === MELEE_RANK; }
    seminggu. Kalau gagal diambil, tool jatuh ke tebakan dari nama skin sendiri. */
 var BUNDLE_NAMES = [];   // nama bundle resmi, untuk label header
 var SKIN_THEME = {};     // nama skin -> themeUuid
+var LVL_SKIN = {};       // uuid skin-level -> nama skin
+var BP_PASSES = [];      // [{key, name, skins:[...], theme, melee}]
+var BP_SKIN_ALL = {};    // semua skin yang pernah jadi hadiah battle pass
 var THEME_SIZE = {};     // themeUuid -> jumlah skin dalam tema itu
 
 function loadBundleNames(){
@@ -651,23 +663,25 @@ function loadBundleNames(){
 function loadSkinData(){
   load("caption:skins", function(c){
     if(c && c.map && c.t && (Date.now() - c.t) < 30 * 864e5){
-      SKIN_THEME = c.map; THEME_SIZE = c.size; afterSkinData();
+      SKIN_THEME = c.map; THEME_SIZE = c.size; LVL_SKIN = c.lvl || {}; afterSkinData();
     }
   });
   if(typeof fetch !== "function") return;
   fetch("https://valorant-api.com/v1/weapons/skins")
     .then(function(r){ return r.json(); })
     .then(function(j){
-      var map = {}, size = {};
+      var map = {}, size = {}, lvl = {};
       (j.data || []).forEach(function(sk){
         var t = sk.themeUuid, n = (sk.displayName || "").trim();
-        if(!t || !n) return;
-        map[n] = t;
-        size[t] = (size[t] || 0) + 1;
+        if(!n) return;
+        if(t){ map[n] = t; size[t] = (size[t] || 0) + 1; }
+        // uuid tiap level skin, dipakai untuk menerjemahkan hadiah battle pass
+        (sk.levels || []).forEach(function(L){ if(L && L.uuid) lvl[L.uuid] = n; });
+        if(sk.uuid) lvl[sk.uuid] = n;
       });
       if(!Object.keys(map).length) return;
-      SKIN_THEME = map; THEME_SIZE = size;
-      save("caption:skins", {t: Date.now(), map: map, size: size});
+      SKIN_THEME = map; THEME_SIZE = size; LVL_SKIN = lvl;
+      save("caption:skins", {t: Date.now(), map: map, size: size, lvl: lvl});
       afterSkinData();
     })
     .catch(function(){});
@@ -675,12 +689,82 @@ function loadSkinData(){
 
 // Data tema bisa datang setelah file di-upload; hitung ulang saat itu terjadi.
 function afterSkinData(){
+  if(rawPasses.length && !BP_PASSES.length && Object.keys(LVL_SKIN).length){
+    rebuildPasses(null); return;
+  }
   if(bpActs.length){
     rebuildBpSkins();
     if(!selectionTouched) pruneBpSkins();
   }
   if(typeof renderSkins === "function" && allSkins.length){ renderSkins(); renderBP(); }
   renderPicked(); build();
+}
+
+/* Battle pass di data Riot berbentuk contract. Tiap contract bertipe "Season"
+   memuat seluruh hadiahnya, jalur gratis maupun premium, jadi dari sini bisa
+   diketahui skin mana saja yang berasal dari battle pass — tidak peduli
+   akunnya punya pass itu atau tidak. */
+function loadContracts(){
+  load("caption:contracts", function(c){
+    if(c && c.list && c.t && (Date.now() - c.t) < 7 * 864e5){
+      rebuildPasses(c.list);
+    }
+  });
+  if(typeof fetch !== "function") return;
+  fetch("https://valorant-api.com/v1/contracts")
+    .then(function(r){ return r.json(); })
+    .then(function(j){
+      var list = (j.data || [])
+        .filter(function(c){ return c.content && c.content.relationType === "Season"; })
+        .map(function(c){
+          var uuids = [];
+          (c.content.chapters || []).forEach(function(ch){
+            (ch.levels || []).forEach(function(L){
+              if(L.reward && L.reward.type === "EquippableSkinLevel") uuids.push(L.reward.uuid);
+            });
+            (ch.freeRewards || []).forEach(function(R){
+              if(R && R.type === "EquippableSkinLevel") uuids.push(R.uuid);
+            });
+          });
+          return { name: c.displayName || "", uuids: uuids };
+        })
+        .filter(function(c){ return c.uuids.length; });
+      if(!list.length) return;
+      save("caption:contracts", {t: Date.now(), list: list});
+      rebuildPasses(list);
+    })
+    .catch(function(){});
+}
+
+// Terjemahkan uuid hadiah jadi nama skin. Butuh data skin, jadi dipanggil
+// ulang setiap salah satu dari keduanya selesai dimuat.
+var rawPasses = [];
+function rebuildPasses(list){
+  if(list) rawPasses = list;
+  if(!rawPasses.length || !Object.keys(LVL_SKIN).length) return;
+
+  BP_PASSES = []; BP_SKIN_ALL = {}; bpContract = {};
+  rawPasses.forEach(function(c){
+    var seen = {}, skins = [];
+    c.uuids.forEach(function(u){
+      var n = LVL_SKIN[u];
+      if(n && !seen[n]){ seen[n] = 1; skins.push(n); }
+    });
+    if(!skins.length) return;
+    skins.forEach(function(n){ BP_SKIN_ALL[n] = 1; });
+
+    var key = canonKey(c.name);
+    var theme = familyOf(skins[0]) || skins[0];
+    var melee = skins.filter(isMelee)[0] || null;
+    BP_PASSES.push({ key: key, name: c.name, skins: skins, theme: theme, melee: melee });
+    if(key) bpContract[key] = theme;
+  });
+  rebuildBpDict();
+  afterSkinData();
+}
+function passFor(act){
+  var k = canonKey(act);
+  return BP_PASSES.filter(function(p){ return p.key === k; })[0] || null;
 }
 
 function bundleOf(skin){
@@ -788,6 +872,13 @@ function sortSelected(){
 /* ---------- battle pass rows ---------- */
 var bpMax = {};
 
+function rebuildBpDict(){
+  bpDict = {};
+  [BP_SEED, bpContract, bpUser].forEach(function(src){
+    Object.keys(src).forEach(function(k){ if(src[k]) bpDict[k] = src[k]; });
+  });
+}
+
 function startsWithTheme(name, theme){
   return name.length > theme.length &&
          name.slice(0, theme.length + 1).toLowerCase() === (theme + " ").toLowerCase();
@@ -808,15 +899,27 @@ function bpSkinsOf(theme){
 
 /* Pass dianggap Max kalau akun punya melee dari tema pass itu —
    melee ada di tier terakhir, jadi memilikinya berarti pass-nya tamat. */
-function bpMeleeOf(theme){
-  var hit = bpSkinsOf(theme).filter(isMelee)[0];
-  return hit || null;
+function bpMeleeOf(theme, act){
+  // Sumber terbaik: melee yang memang jadi hadiah pass itu menurut data contract.
+  var pass = act ? passFor(act) : null;
+  if(pass && pass.melee) return pass.melee;
+  return bpSkinsOf(theme).filter(isMelee)[0] || null;
+}
+function ownsSkin(name){
+  return !!name && allSkins.some(function(s){ return s.name === name; });
 }
 
 /* Semua skin yang berasal dari battle pass milik akun ini. Skin begini
    tidak ikut daftar jualan karena bukan bundle beli. */
 var bpSkins = {};
 function rebuildBpSkins(){
+  // Kalau data contract sudah ada, semua skin battle pass ditandai — termasuk
+  // hadiah jalur gratis dari pass yang tidak dimiliki akun ini.
+  if(Object.keys(BP_SKIN_ALL).length){
+    bpSkins = {};
+    allSkins.forEach(function(s){ if(BP_SKIN_ALL[s.name]) bpSkins[s.name] = 1; });
+    return;
+  }
   bpSkins = {};
   bpActs.forEach(function(act){
     bpSkinsOf(bpDict[canonKey(act)]).forEach(function(n){ bpSkins[n] = 1; });
@@ -862,18 +965,21 @@ function renderBP(){
     function check(){
       var v = inp.value.trim();
       inp.classList.toggle("unknown", !v);
-      var melee = bpMeleeOf(v);
+      var melee = bpMeleeOf(v, act);
+      var has = ownsSkin(melee);
 
       // Status Max ditentukan otomatis sekali, setelah itu ikut pilihan manual.
-      if(bpMax[act] === undefined) bpMax[act] = !!melee;
+      if(bpMax[act] === undefined) bpMax[act] = has;
       cb.checked = !!bpMax[act];
       row.style.opacity = bpMax[act] ? "1" : ".45";
 
       actEl.textContent = act + (melee ? "  ·  " + melee : "");
       if(!v){ flag.textContent = ""; flag.title = ""; return; }
-      flag.textContent = melee ? "" : "⚠";
+      flag.textContent = has ? "" : "⚠";
       flag.style.color = "var(--warn)";
-      flag.title = melee ? "" : "Tidak ada melee " + v + " di inventory — pass ini kemungkinan belum Max.";
+      flag.title = has ? "" :
+        (melee ? "Tidak punya " + melee + " — pass ini kemungkinan belum Max."
+               : "Melee pass ini tidak ketemu, tentukan sendiri.");
     }
 
     cb.addEventListener("change", function(){
@@ -883,9 +989,10 @@ function renderBP(){
     });
     inp.addEventListener("input", function(){
       var v = inp.value.trim();
-      if(v) bpDict[key] = v; else delete bpDict[key];
+      if(v) bpUser[key] = v; else delete bpUser[key];
+      rebuildBpDict();
       delete bpMax[act];              // nama tema berubah, hitung ulang otomatis
-      check(); save("caption:bpdict", bpDict); syncPush();
+      check(); save("caption:bpdict", bpUser); syncPush();
       rebuildBpSkins();
       if(!selectionTouched) pruneBpSkins();
       renderSkins(); renderPicked(); build(); updateBpCount();
@@ -1326,16 +1433,16 @@ function savePrefs(){
 PREF_KEYS.forEach(function(k){ $(k).addEventListener("change", savePrefs); });
 
 function allSettings(){
-  var o = { tpl: {A:$("tplA").value, B:$("tplB").value}, bpDict: bpDict, prefs: {} };
+  var o = { tpl: {A:$("tplA").value, B:$("tplB").value}, bpDict: bpUser, prefs: {} };
   PREF_KEYS.forEach(function(k){ o.prefs[k] = $(k).value; });
   return o;
 }
 function applySettings(o, fromServer){
   if(o.tpl){ if(o.tpl.A) $("tplA").value = o.tpl.A; if(o.tpl.B) $("tplB").value = o.tpl.B; }
-  if(o.bpDict) Object.keys(o.bpDict).forEach(function(k){ bpDict[k] = o.bpDict[k]; });
+  if(o.bpDict){ Object.keys(o.bpDict).forEach(function(k){ bpUser[k] = o.bpDict[k]; }); rebuildBpDict(); }
   if(o.prefs) PREF_KEYS.forEach(function(k){ if(o.prefs[k] != null) $(k).value = o.prefs[k]; });
   save("caption:tpl", {A:$("tplA").value, B:$("tplB").value});
-  save("caption:bpdict", bpDict);
+  save("caption:bpdict", bpUser);
   var pr = {}; PREF_KEYS.forEach(function(k){ pr[k] = $(k).value; });
   save("caption:prefs", pr);
   if(!fromServer) syncPush();
@@ -1368,9 +1475,11 @@ $("importFile").addEventListener("change", function(e){
 /* ---------- boot ---------- */
 loadBundleNames();
 loadSkinData();
-bpDict = JSON.parse(JSON.stringify(BP_SEED));
+loadContracts();
+rebuildBpDict();
 load("caption:bpdict", function(saved){
-  Object.keys(saved).forEach(function(k){ bpDict[k] = saved[k]; });
+  Object.keys(saved).forEach(function(k){ bpUser[k] = saved[k]; });
+  rebuildBpDict();
   renderBP(); build();
 });
 load("caption:tpl", function(t){
