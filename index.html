@@ -627,7 +627,8 @@ var BUNDLE_NAMES = [];   // nama bundle resmi, untuk label header
 var SKIN_THEME = {};     // nama skin -> themeUuid
 var LVL_SKIN = {};       // uuid skin-level -> nama skin
 var BP_PASSES = [];      // [{key, name, skins:[...], theme, melee}]
-var BP_SKIN_ALL = {};    // semua skin yang pernah jadi hadiah battle pass
+var BP_SKIN_ALL = {};    // skin hadiah battle pass
+var AGENT_SKIN_ALL = {}; // skin hadiah agent contract
 var THEME_SIZE = {};     // themeUuid -> jumlah skin dalam tema itu
 
 function loadBundleNames(){
@@ -704,7 +705,7 @@ function afterSkinData(){
    diketahui skin mana saja yang berasal dari battle pass — tidak peduli
    akunnya punya pass itu atau tidak. */
 function loadContracts(){
-  load("caption:contracts", function(c){
+  load("caption:contracts2", function(c){
     if(c && c.list && c.t && (Date.now() - c.t) < 7 * 864e5){
       rebuildPasses(c.list);
     }
@@ -714,7 +715,10 @@ function loadContracts(){
     .then(function(r){ return r.json(); })
     .then(function(j){
       var list = (j.data || [])
-        .filter(function(c){ return c.content && c.content.relationType === "Season"; })
+        .filter(function(c){
+          var t = c.content && c.content.relationType;
+          return t === "Season" || t === "Agent";
+        })
         .map(function(c){
           var uuids = [];
           (c.content.chapters || []).forEach(function(ch){
@@ -725,11 +729,11 @@ function loadContracts(){
               if(R && R.type === "EquippableSkinLevel") uuids.push(R.uuid);
             });
           });
-          return { name: c.displayName || "", uuids: uuids };
+          return { name: c.displayName || "", type: c.content.relationType, uuids: uuids };
         })
         .filter(function(c){ return c.uuids.length; });
       if(!list.length) return;
-      save("caption:contracts", {t: Date.now(), list: list});
+      save("caption:contracts2", {t: Date.now(), list: list});
       rebuildPasses(list);
     })
     .catch(function(){});
@@ -742,7 +746,7 @@ function rebuildPasses(list){
   if(list) rawPasses = list;
   if(!rawPasses.length || !Object.keys(LVL_SKIN).length) return;
 
-  BP_PASSES = []; BP_SKIN_ALL = {}; bpContract = {};
+  BP_PASSES = []; BP_SKIN_ALL = {}; AGENT_SKIN_ALL = {}; bpContract = {};
   rawPasses.forEach(function(c){
     var seen = {}, skins = [];
     c.uuids.forEach(function(u){
@@ -750,6 +754,13 @@ function rebuildPasses(list){
       if(n && !seen[n]){ seen[n] = 1; skins.push(n); }
     });
     if(!skins.length) return;
+
+    // Agent contract juga memberi skin gratis, jadi ikut ditandai tapi
+    // tidak masuk daftar battle pass.
+    if(c.type === "Agent"){
+      skins.forEach(function(n){ AGENT_SKIN_ALL[n] = 1; });
+      return;
+    }
     skins.forEach(function(n){ BP_SKIN_ALL[n] = 1; });
 
     var key = canonKey(c.name);
@@ -809,8 +820,12 @@ function detectGroups(){
   var out = {};
   Object.keys(byKey).forEach(function(key){
     var items = byKey[key];
-    var label = bundleOf(items[0]) || commonPrefix(items);
-    if(!label) return;
+    // Kelompok satu skin hanya boleh terbentuk kalau namanya memang terdaftar
+    // sebagai bundle di valorant-api. Tanpa syarat ini, skin gratis seperti
+    // Mythmaker Sheriff ikut jadi header "-Mythmaker Sheriff Bundle".
+    var label = bundleOf(items[0]);
+    if(!label && items.length > 1) label = commonPrefix(items);
+    if(!label || label === items[0]) return;
 
     // Semua skin milik akun yang masuk kelompok yang sama
     var owned = allSkins.filter(function(s){ return groupKeyOf(s.name) === key; })
@@ -910,8 +925,16 @@ function ownsSkin(name){
 
 /* Semua skin yang berasal dari battle pass milik akun ini. Skin begini
    tidak ikut daftar jualan karena bukan bundle beli. */
-var bpSkins = {};
+var bpSkins = {};      // skin battle pass milik akun ini
+var agentSkins = {};   // skin agent contract milik akun ini
+function rebuildAgentSkins(){
+  agentSkins = {};
+  allSkins.forEach(function(s){ if(AGENT_SKIN_ALL[s.name]) agentSkins[s.name] = 1; });
+}
+function isFreeSkin(name){ return !!(bpSkins[name] || agentSkins[name]); }
+
 function rebuildBpSkins(){
+  rebuildAgentSkins();
   // Kalau data contract sudah ada, semua skin battle pass ditandai — termasuk
   // hadiah jalur gratis dari pass yang tidak dimiliki akun ini.
   if(Object.keys(BP_SKIN_ALL).length){
@@ -1091,11 +1114,14 @@ function renderSkins(){
     var tag = document.createElement("span"); tag.className = "tag " + s.tier; tag.textContent = s.tier;
     var nm = document.createElement("span"); nm.textContent = s.name;
     lab.appendChild(cb); lab.appendChild(tag); lab.appendChild(nm);
-    if(bpSkins[s.name]){
-      var bp = document.createElement("span");
-      bp.className = "tag bp"; bp.textContent = "BP";
-      bp.title = "Skin battle pass — biasanya tidak ikut daftar jualan";
-      lab.appendChild(bp);
+    if(bpSkins[s.name] || agentSkins[s.name]){
+      var free = document.createElement("span");
+      free.className = "tag bp";
+      free.textContent = bpSkins[s.name] ? "BP" : "Agent";
+      free.title = bpSkins[s.name]
+        ? "Skin battle pass — gratis, tidak ikut daftar jualan"
+        : "Skin agent contract — gratis, tidak ikut daftar jualan";
+      lab.appendChild(free);
     }
     row.appendChild(lab); box.appendChild(row);
   });
@@ -1176,7 +1202,7 @@ function pickRow(name, n){
 function applyDefaultSelection(){
   var haveBpData = Object.keys(BP_SKIN_ALL).length > 0;
   selected = allSkins.filter(function(s){
-    if(bpSkins[s.name]) return false;
+    if(isFreeSkin(s.name)) return false;
     return haveBpData ? true : DEFAULT_ON[s.tier];
   }).map(function(s){ return s.name; });
   sortSelected();
