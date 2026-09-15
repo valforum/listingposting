@@ -1,1533 +1,624 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Caption Generator — 2 Toko</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jubel Calculator — Valorant Account Pricer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 <style>
-:root{
-  --navy:#0F1923;--panel:#1B2733;--panel-2:#22303D;--line:#33424F;
-  --ink:#ECE8E1;--ink-dim:#8FA3B0;--red:#FF4655;--blue:#4A9BE8;--warn:#FFA838;
-  --t-ultra:#EFEB65;--t-exclusive:#FFA838;--t-premium:#D1548D;--t-deluxe:#00A28F;--t-select:#5A9FE2;
-  --cut:polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px));
-}
-*{box-sizing:border-box}
-html,body{margin:0;padding:0}
-body{background:var(--navy);color:var(--ink);font-family:"Segoe UI",system-ui,-apple-system,"Helvetica Neue",Arial,sans-serif;font-size:15px;line-height:1.5;padding:24px 20px 64px}
-.wrap{max-width:1180px;margin:0 auto}
-header{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin-bottom:6px}
-h1{font-size:34px;line-height:.95;margin:0;font-weight:800;letter-spacing:.06em;text-transform:uppercase;font-stretch:condensed}
-h1 span{color:var(--red)}
-header p{margin:0;color:var(--ink-dim);font-size:14px}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:24px;align-items:start}
-@media (max-width:900px){.grid{grid-template-columns:1fr}}
-.card{background:var(--panel);border:1px solid var(--line);clip-path:var(--cut);padding:18px}
-.card + .card{margin-top:20px}
-.card h2{font-size:13px;margin:0 0 14px;font-weight:700;letter-spacing:.04em}
-.card h2 em{font-style:normal;color:var(--ink-dim);font-weight:400}
-#drop{border:2px dashed var(--line);background:var(--panel-2);padding:26px 18px;text-align:center;cursor:pointer;transition:border-color .15s,background .15s}
-#drop.over{border-color:var(--red);background:#2A3644}
-#drop strong{display:block;font-size:16px;margin-bottom:4px}
-#drop small{color:var(--ink-dim)}
-#fileInfo{margin-top:12px;font-size:13px;color:var(--ink-dim);display:none}
-#fileInfo b{color:var(--ink)}
-.err{color:#FF8A94;font-size:13px;margin-top:10px;display:none}
-.fields{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.fields .full{grid-column:1/-1}
-label{display:block;font-size:12px;color:var(--ink-dim);margin-bottom:4px}
-label b{color:var(--ink);font-weight:600}
-input,textarea,select{width:100%;background:var(--navy);color:var(--ink);border:1px solid var(--line);border-radius:0;padding:8px 10px;font:inherit;font-size:14px}
-input:focus,textarea:focus,select:focus{outline:2px solid var(--red);outline-offset:-2px;border-color:var(--red)}
-textarea{resize:vertical;min-height:70px}
-.hint{color:var(--ink-dim);font-size:12px;margin:6px 0 0}
-.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
-.toolbar input{flex:1;min-width:140px}
-.tierbar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
-.tierbtn{border:1px solid var(--line);background:transparent;color:var(--ink-dim);padding:3px 9px;font:inherit;font-size:12px;cursor:pointer}
-.tierbtn[aria-pressed="true"]{color:var(--navy);font-weight:700}
-.tierbtn[data-tier="Ultra"][aria-pressed="true"]{background:var(--t-ultra);border-color:var(--t-ultra)}
-.tierbtn[data-tier="Exclusive"][aria-pressed="true"]{background:var(--t-exclusive);border-color:var(--t-exclusive)}
-.tierbtn[data-tier="Premium"][aria-pressed="true"]{background:var(--t-premium);border-color:var(--t-premium)}
-.tierbtn[data-tier="Deluxe"][aria-pressed="true"]{background:var(--t-deluxe);border-color:var(--t-deluxe)}
-.tierbtn[data-tier="Select"][aria-pressed="true"]{background:var(--t-select);border-color:var(--t-select)}
-.list{max-height:280px;overflow:auto;border:1px solid var(--line);background:var(--navy)}
-.row{display:flex;align-items:center;gap:9px;padding:6px 10px;border-bottom:1px solid #22303D;font-size:14px}
-.row:last-child{border-bottom:none}
-.row label{margin:0;color:var(--ink);font-size:14px;cursor:pointer;flex:1;display:flex;align-items:center;gap:9px}
-.row input[type=checkbox]{width:15px;height:15px;accent-color:var(--red);flex:none}
-.tag{font-size:10px;font-weight:700;letter-spacing:.05em;padding:1px 6px;color:var(--navy);flex:none}
-.tag.Ultra{background:var(--t-ultra)}.tag.Exclusive{background:var(--t-exclusive)}
-.tag.Premium{background:var(--t-premium)}.tag.Deluxe{background:var(--t-deluxe)}
-.tag.Select{background:var(--t-select)}.tag.Custom{background:var(--ink-dim)}
-.tag.bp{background:transparent;color:var(--ink-dim);border:1px solid var(--line)}
-.empty{padding:14px;color:var(--ink-dim);font-size:13px}
-.pick{display:flex;align-items:center;gap:8px;padding:5px 10px;border-bottom:1px solid #22303D;font-size:14px}
-.pick .num{color:var(--ink-dim);font-variant-numeric:tabular-nums;width:22px;flex:none;text-align:right}
-.pick .nm{flex:1}
-.mini{background:transparent;border:1px solid var(--line);color:var(--ink-dim);cursor:pointer;font:inherit;font-size:12px;width:24px;height:24px;line-height:1;flex:none}
-.mini:hover{color:var(--ink);border-color:var(--ink-dim)}
-.mini.x:hover{color:var(--red);border-color:var(--red)}
-.chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
-.chip{border:1px solid var(--line);background:transparent;color:var(--ink-dim);padding:3px 8px;font:inherit;font-size:12px;cursor:pointer}
-.chip:hover{color:var(--ink);border-color:var(--ink-dim)}
-.chip.code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11px}
-.chip[aria-pressed="true"]{background:var(--red);border-color:var(--red);color:#fff}
-.chip.partial{border-style:dashed}
-.grouphead{padding:7px 10px 4px;font-size:12px;font-weight:700;color:var(--ink-dim);
-  border-bottom:1px solid #22303D;background:var(--panel-2)}
-
-/* battle pass rows */
-.bprow{display:flex;align-items:center;gap:8px;padding:7px 10px;border-bottom:1px solid #22303D}
-.bprow:last-child{border-bottom:none}
-.bprow .num{color:var(--ink-dim);width:18px;flex:none;font-variant-numeric:tabular-nums}
-.bprow input{flex:0 0 40%;min-width:110px}
-.bprow .act{flex:1;color:var(--ink-dim);font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.bprow .flag{flex:none;font-size:13px;width:16px;text-align:center}
-.bprow input.unknown{border-color:var(--warn)}
-.bprow input[type=checkbox]{flex:none;width:15px;height:15px;min-width:0;accent-color:var(--red)}
-
-/* templates */
-.tpl{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;font-size:12.5px;line-height:1.55;min-height:300px;white-space:pre;overflow-x:auto}
-.tabs{display:flex;margin-bottom:16px;border-bottom:1px solid var(--line)}
-.tab{background:transparent;border:none;border-bottom:2px solid transparent;color:var(--ink-dim);padding:8px 16px;font:inherit;font-size:14px;font-weight:600;cursor:pointer;margin-bottom:-1px}
-.tab:hover{color:var(--ink)}
-.tab[aria-selected="true"]{color:var(--ink)}
-.tab[data-store="A"][aria-selected="true"]{border-bottom-color:var(--red)}
-.tab[data-store="B"][aria-selected="true"]{border-bottom-color:var(--blue)}
-.pane[hidden]{display:none}
-.out-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px}
-.caption{width:100%;min-height:460px;background:var(--navy);border:1px solid var(--line);color:var(--ink);padding:14px;font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;font-size:13px;line-height:1.62;white-space:pre;overflow:auto}
-.btn{background:var(--red);color:#fff;border:none;padding:9px 18px;font:inherit;font-weight:700;font-size:14px;cursor:pointer;clip-path:polygon(0 0,calc(100% - 8px) 0,100% 8px,100% 100%,8px 100%,0 calc(100% - 8px))}
-.btn:hover{filter:brightness(.9)}
-.btn.blue{background:var(--blue)}
-.btn.ghost{background:transparent;border:1px solid var(--line);color:var(--ink);font-weight:400}
-.btn.ghost:hover{background:var(--panel-2);border-color:var(--ink-dim);filter:none}
-.sticky{position:sticky;top:24px}
-@media (max-width:900px){.sticky{position:static}}
-.count{color:var(--ink-dim);font-size:12px}
-
-/* gear + modal */
-.tabs{align-items:center}
-.gear{margin-left:auto;background:transparent;border:1px solid var(--line);color:var(--ink-dim);
-  width:32px;height:32px;font-size:15px;line-height:1;cursor:pointer;margin-bottom:6px}
-.gear:hover{color:var(--ink);border-color:var(--ink-dim)}
-.overlay{position:fixed;inset:0;background:rgba(9,14,20,.78);display:flex;align-items:center;
-  justify-content:center;padding:24px;z-index:50}
-.overlay[hidden]{display:none}
-.modal{background:var(--panel);border:1px solid var(--line);clip-path:var(--cut);padding:18px;
-  width:100%;max-width:620px;max-height:88vh;overflow:auto}
-.modal-head{display:flex;align-items:center;gap:12px;margin-bottom:14px}
-.modal-head h2{margin:0;flex:1}
-.tpltabs{display:flex;border-bottom:1px solid var(--line);margin-bottom:14px}
-.tpltab{background:transparent;border:none;border-bottom:2px solid transparent;color:var(--ink-dim);
-  padding:7px 14px;font:inherit;font-size:13px;font-weight:600;cursor:pointer;margin-bottom:-1px}
-.tpltab:hover{color:var(--ink)}
-.tpltab[aria-selected="true"]{color:var(--ink)}
-.tpltab[data-tplstore="A"][aria-selected="true"]{border-bottom-color:var(--red)}
-.tpltab[data-tplstore="B"][aria-selected="true"]{border-bottom-color:var(--blue)}
-.modal-foot{display:flex;justify-content:space-between;gap:10px;margin-top:14px}
+:root{--bg:#0d0f14;--bg2:#11151c;--panel:#161b24;--panel2:#1c222d;--line:#27303d;--line2:#323d4d;--ink:#ece6dc;--muted:#7d8794;--muted2:#5a6470;--red:#ff4655;--red-d:#c5303d;--teal:#19e3c6;--teal-d:#0f9f8b;--gold:#e8c170;--fire:#ff8a3d}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--ink);font-family:'Inter',system-ui,sans-serif;font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+body{background:radial-gradient(1200px 600px at 80% -10%,rgba(255,70,85,.07),transparent 60%),radial-gradient(1000px 500px at 0% 110%,rgba(25,227,198,.06),transparent 55%),var(--bg);min-height:100vh;padding:0 0 70px}
+.wrap{max-width:1200px;margin:0 auto;padding:0 22px}
+.wrapwide{max-width:1320px;margin:0 auto;padding:0 22px}
+h1,h2,h3,.disp{font-family:'Oswald','Arial Narrow',sans-serif;letter-spacing:.04em}
+button{font-family:inherit;cursor:pointer}
+header{border-bottom:1px solid var(--line);background:linear-gradient(180deg,rgba(255,70,85,.05),transparent);padding:18px 0;margin-bottom:24px}
+.nav{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.tick{width:11px;height:30px;background:var(--red);clip-path:polygon(0 0,100% 0,100% 78%,55% 100%,0 78%)}
+.nav h1{font-size:26px;font-weight:700;text-transform:uppercase;line-height:1}
+.nav .sub{color:var(--muted);font-size:11px;letter-spacing:.10em;text-transform:uppercase;margin-top:3px}
+.navbtns{margin-left:auto;display:flex;gap:9px;align-items:center}
+.btn{border:1px solid var(--line2);background:var(--bg2);color:var(--ink);padding:9px 15px;border-radius:3px;font-family:'Oswald',sans-serif;text-transform:uppercase;letter-spacing:.05em;font-size:13px;font-weight:600;transition:.15s;position:relative}
+.btn:hover{border-color:var(--muted)} .btn.primary{background:var(--red);border-color:var(--red);color:#fff} .btn.primary:hover{background:var(--red-d)}
+.btn.teal{background:var(--teal-d);border-color:var(--teal-d);color:#03110e} .btn.ghost{background:transparent} .btn.sm{padding:6px 10px;font-size:11.5px} .btn.xs{padding:4px 8px;font-size:10.5px}
+.btn.on{background:var(--panel2);border-color:var(--gold);color:var(--gold)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.dot{position:absolute;top:-6px;right:-6px;background:var(--fire);color:#fff;font-size:10px;font-weight:700;min-width:18px;height:18px;border-radius:9px;display:flex;align-items:center;justify-content:center;padding:0 5px;font-family:'Inter',sans-serif;letter-spacing:0}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:3px}
+.card .hd{display:flex;align-items:center;gap:9px;padding:13px 16px;border-bottom:1px solid var(--line);text-transform:uppercase;font-family:'Oswald',sans-serif;font-weight:600;letter-spacing:.08em;font-size:14px}
+.card .hd .n{font-family:'JetBrains Mono',monospace;color:var(--red);font-size:12px;font-weight:700}
+.card .hd .r{margin-left:auto;font-family:'Inter',sans-serif;text-transform:none;letter-spacing:0;font-weight:400;font-size:12px;color:var(--muted)}
+.card .bd{padding:16px}
+label.fld{display:block;text-transform:uppercase;font-size:11px;letter-spacing:.10em;color:var(--muted);margin:0 0 7px;font-weight:600}
+textarea,select,input[type=number],input[type=text],input[type=date],input[type=password]{width:100%;background:var(--bg2);color:var(--ink);border:1px solid var(--line2);border-radius:3px;padding:10px 12px;font-size:14px;font-family:'Inter',sans-serif;outline:none;transition:border-color .15s}
+textarea{min-height:150px;resize:vertical;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.6}
+textarea:focus,select:focus,input:focus{border-color:var(--red)}
+input.inl{width:auto;padding:5px 8px;font-size:13px;font-family:'JetBrains Mono',monospace;text-align:right}
+.hint{color:var(--muted);font-size:11.5px;margin-top:7px;line-height:1.45}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:13px;margin-top:14px}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:13px;margin-top:14px}
+@media(max-width:700px){.row3{grid-template-columns:1fr 1fr}}
+.seg{display:flex;border:1px solid var(--line2);border-radius:3px;overflow:hidden}
+.seg button{flex:1;background:var(--bg2);border:0;color:var(--muted);padding:10px 6px;font-family:'Oswald',sans-serif;text-transform:uppercase;letter-spacing:.05em;font-size:13px;font-weight:600;transition:.15s}
+.seg button.on{background:var(--red);color:#fff}
+/* calculator */
+.grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.12fr);gap:22px;align-items:start}
+@media(max-width:900px){.grid{grid-template-columns:1fr}}
+.mv{display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding:13px 16px;margin-bottom:14px;background:linear-gradient(135deg,rgba(232,193,112,.13),rgba(232,193,112,.03));border:1px solid rgba(232,193,112,.35);border-radius:3px}
+.mv .l{text-transform:uppercase;font-size:11px;letter-spacing:.09em;color:var(--gold);font-weight:600;font-family:'Oswald',sans-serif}
+.mv .v{font-family:'Oswald',sans-serif;font-weight:700;font-size:26px}
+.results{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:540px){.results{grid-template-columns:1fr}}
+.out{position:relative;padding:18px 18px 16px;border:1px solid var(--line2);clip-path:polygon(0 0,100% 0,100% calc(100% - 16px),calc(100% - 16px) 100%,0 100%)}
+.out.buy{background:linear-gradient(155deg,rgba(255,70,85,.13),rgba(255,70,85,.02));border-color:rgba(255,70,85,.4)}
+.out.sell{background:linear-gradient(155deg,rgba(25,227,198,.12),rgba(25,227,198,.02));border-color:rgba(25,227,198,.38)}
+.out .lab{text-transform:uppercase;font-family:'Oswald',sans-serif;font-weight:600;letter-spacing:.10em;font-size:13px;display:flex;align-items:center;gap:8px}
+.out.buy .lab{color:var(--red)} .out.sell .lab{color:var(--teal)}
+.out .lab .d{width:8px;height:8px;border-radius:50%} .out.buy .d{background:var(--red)} .out.sell .d{background:var(--teal)}
+.out .range{font-family:'Oswald',sans-serif;font-weight:700;font-size:24px;margin:12px 0 2px;line-height:1.12}
+.out .range small{font-size:14px;color:var(--muted);font-weight:500}
+.out .reco{font-size:12px;color:var(--muted);font-family:'JetBrains Mono',monospace;margin-top:6px} .out .reco b{color:var(--ink)}
+.badge{font-size:9.5px;text-transform:uppercase;letter-spacing:.06em;padding:3px 7px;border-radius:2px;font-weight:700;background:var(--gold);color:#1a1205;margin-left:auto}
+.out .rows{margin-top:12px;display:flex;flex-direction:column;gap:6px}
+.pr{display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.06)}
+.pr:last-child{border-bottom:0}
+.pr .k{text-transform:uppercase;font-size:10.5px;letter-spacing:.08em;color:var(--muted);font-weight:600;font-family:'Oswald',sans-serif}
+.pr .k small{display:block;text-transform:none;letter-spacing:0;font-size:10px;color:var(--muted2);font-family:'Inter',sans-serif;font-weight:400}
+.pr .v{font-family:'Oswald',sans-serif;font-weight:700;font-size:20px;line-height:1.1;cursor:pointer}
+.pr.main .v{font-size:30px}
+.out.buy .pr.main .v{color:#fff} .out.sell .pr.main .v{color:var(--teal)}
+.pr .v:hover{text-decoration:underline dotted}
+.out .note{margin-top:10px;font-size:11px;color:var(--muted);line-height:1.4}
+.rule{font-size:9.5px;text-transform:uppercase;letter-spacing:.06em;padding:3px 7px;border-radius:2px;font-weight:700;background:rgba(255,70,85,.2);color:#ff9aa3;margin-left:auto}
+details.basis{margin-top:14px;border:1px solid var(--line);border-radius:3px;background:var(--bg2)}
+details.basis summary{list-style:none;cursor:pointer;padding:11px 14px;display:flex;justify-content:space-between;align-items:center;font-family:'Oswald',sans-serif;text-transform:uppercase;letter-spacing:.07em;font-size:12px;color:var(--muted);font-weight:600}
+details.basis summary::-webkit-details-marker{display:none}
+details.basis[open] summary{border-bottom:1px solid var(--line);color:var(--ink)}
+details.basis[open] summary span:first-child::before{content:''}
+details.basis summary .mvs{font-family:'JetBrains Mono',monospace;text-transform:none;letter-spacing:0;font-size:12px}
+details.basis summary .mvs b{color:var(--gold);font-weight:700}
+details.basis .ledger{margin:0;padding:6px 14px 14px}
+.profit{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:14px;padding:12px 16px;background:rgba(25,227,198,.07);border:1px solid rgba(25,227,198,.28);border-radius:3px}
+.profit .l{text-transform:uppercase;font-size:11px;letter-spacing:.08em;color:var(--teal);font-weight:600;font-family:'Oswald',sans-serif}
+.profit .v{font-family:'Oswald',sans-serif;font-weight:700;font-size:20px;color:var(--teal)} .profit .v small{font-size:11px;color:var(--muted);font-family:'JetBrains Mono',monospace;font-weight:500}
+.ledger{margin-top:16px}
+.ledger .lh{display:flex;justify-content:space-between;text-transform:uppercase;font-size:11px;letter-spacing:.08em;color:var(--muted);padding:0 2px 8px;border-bottom:1px solid var(--line);font-weight:600}
+.li{display:grid;grid-template-columns:1fr auto;gap:10px;padding:7px 2px;border-bottom:1px solid rgba(39,48,61,.55);font-size:13px;align-items:center}
+.li .nm{display:flex;align-items:center;gap:7px;min-width:0;flex-wrap:wrap}
+.li .nm span.t{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+.li .val{font-family:'JetBrains Mono',monospace;font-size:12.5px;white-space:nowrap;text-align:right}
+.li .val small{color:var(--muted);font-size:10.5px;display:block}
+.tag{font-size:9.5px;text-transform:uppercase;letter-spacing:.05em;padding:2px 5px;border-radius:2px;font-weight:700;flex:none}
+.tag.wpn{background:rgba(125,135,148,.18);color:var(--muted)} .tag.est{background:rgba(232,193,112,.16);color:var(--gold)} .tag.dim{background:rgba(255,70,85,.16);color:var(--red)}
+.tag.fz{background:rgba(25,227,198,.15);color:var(--teal)} .tag.fire{background:rgba(255,138,61,.18);color:var(--fire)} .tag.unk{background:rgba(255,70,85,.22);color:#ff9aa3} .tag.tier{background:rgba(125,135,148,.12);color:var(--muted2)}
+.li.mod{color:var(--muted)} .li.mod .val{color:var(--ink)} .li.mod.neg .val{color:var(--red)} .li.mod.pos .val{color:var(--teal)}
+.li.total{border:0;margin-top:6px;padding-top:11px;border-top:1px solid var(--line2)}
+.li.total .nm{font-family:'Oswald',sans-serif;text-transform:uppercase;letter-spacing:.06em;font-weight:600;font-size:15px}
+.li.total .val{font-family:'Oswald',sans-serif;font-size:17px;font-weight:700;color:var(--gold)}
+.cempty{color:var(--muted);text-align:center;padding:34px 10px;font-size:13px}
+.warn{margin-top:13px;background:rgba(232,193,112,.08);border:1px solid rgba(232,193,112,.3);border-radius:3px;padding:10px 12px;font-size:12px;color:var(--gold);line-height:1.5}
+.confirm{display:inline-flex;gap:6px;align-items:center;background:rgba(25,227,198,.08);border:1px dashed rgba(25,227,198,.4);padding:3px 8px;border-radius:3px;font-size:11.5px;color:var(--teal)}
+.confirm button{background:var(--teal-d);border:0;color:#03110e;border-radius:2px;padding:2px 8px;font-size:10.5px;font-weight:700;text-transform:uppercase}
+.statusline{font-size:11.5px;color:var(--muted);margin-top:10px;font-family:'JetBrains Mono',monospace}
+.statusline b{color:var(--teal)} .statusline .bad{color:var(--red)}
+/* admin */
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:18px;border-bottom:1px solid var(--line);padding-bottom:12px}
+.tabs button{border:1px solid var(--line2);background:var(--bg2);color:var(--muted);padding:8px 14px;border-radius:3px;font-family:'Oswald',sans-serif;text-transform:uppercase;letter-spacing:.05em;font-size:12.5px;font-weight:600;position:relative}
+.tabs button.on{background:var(--panel2);border-color:var(--gold);color:var(--gold)}
+.tabs button .cnt{margin-left:6px;background:var(--fire);color:#fff;font-size:10px;padding:1px 6px;border-radius:8px;font-family:'Inter',sans-serif;letter-spacing:0}
+.sec{display:none} .sec.on{display:block}
+.notif{border:1px solid var(--line2);border-left:3px solid var(--fire);background:rgba(255,138,61,.06);border-radius:3px;padding:12px 14px;margin-bottom:10px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.notif.exp{border-left-color:var(--red);background:rgba(255,70,85,.07)} .notif.new{border-left-color:var(--teal);background:rgba(25,227,198,.06)}
+.notif .t{flex:1;min-width:220px;font-size:13px} .notif .t b{color:var(--ink)} .notif .t small{display:block;color:var(--muted);font-size:11.5px;margin-top:2px}
+.notif .a{display:flex;gap:6px;flex-wrap:wrap}
+.ok{color:var(--teal);text-align:center;padding:26px;font-size:13px;border:1px dashed var(--line2);border-radius:3px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead th{text-align:left;padding:10px 12px;text-transform:uppercase;font-size:10.5px;letter-spacing:.07em;color:var(--muted);font-weight:600;border-bottom:1px solid var(--line2);white-space:nowrap;background:var(--panel2)}
+thead th.s{cursor:pointer;user-select:none} thead th.s:hover{color:var(--ink)}
+tbody td{padding:9px 12px;border-bottom:1px solid rgba(39,48,61,.55);vertical-align:middle}
+tbody tr:hover{background:rgba(255,255,255,.02)}
+.mono{font-family:'JetBrains Mono',monospace;font-size:12px}
+.tablewrap{background:var(--panel);border:1px solid var(--line);border-radius:3px;overflow-x:auto;max-height:560px;overflow-y:auto}
+.toolbar{display:flex;gap:10px;align-items:end;flex-wrap:wrap;margin-bottom:12px}
+.toolbar>div{min-width:160px} .toolbar>div.grow{flex:1;min-width:220px}
+.pill{display:inline-block;font-size:10px;text-transform:uppercase;letter-spacing:.04em;padding:2px 7px;border-radius:10px;font-weight:700}
+.pill.fire{background:rgba(255,138,61,.18);color:var(--fire)} .pill.red{background:rgba(255,70,85,.18);color:#ff9aa3} .pill.teal{background:rgba(25,227,198,.15);color:var(--teal)} .pill.g{background:rgba(125,135,148,.18);color:var(--muted)}
+.frow{margin-bottom:14px}
+.savebar{position:sticky;bottom:0;background:linear-gradient(180deg,transparent,var(--bg) 25%);padding:18px 0 4px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:18px}
+.savebar .st{font-size:12px;color:var(--muted);font-family:'JetBrains Mono',monospace}
+.dirty{color:var(--gold)}
+.overlay{position:fixed;inset:0;background:rgba(5,7,10,.8);backdrop-filter:blur(3px);z-index:50;display:none;align-items:center;justify-content:center;padding:20px}
+.overlay.on{display:flex}
+.modal{background:var(--panel);border:1px solid var(--line2);border-radius:4px;width:100%;max-width:520px;box-shadow:0 24px 70px rgba(0,0,0,.6)}
+.modal .mh{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--line);font-family:'Oswald',sans-serif;text-transform:uppercase;letter-spacing:.06em;font-weight:600;font-size:17px}
+.modal .mh .x{background:0;border:0;color:var(--muted);font-size:22px;line-height:1}
+.modal .mb{padding:20px} .modal .mf{display:flex;gap:10px;justify-content:flex-end;padding:14px 20px;border-top:1px solid var(--line)}
+.errbox{background:rgba(255,70,85,.1);border:1px solid rgba(255,70,85,.4);color:#ff8d97;border-radius:3px;padding:10px 13px;font-size:12.5px;margin-bottom:14px;display:none} .errbox.on{display:block}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--teal-d);color:#03110e;padding:12px 22px;border-radius:4px;font-weight:600;font-size:13px;z-index:80;opacity:0;transition:.25s;pointer-events:none;font-family:'Oswald',sans-serif;text-transform:uppercase;letter-spacing:.04em}
+.toast.on{opacity:1} .toast.bad{background:var(--red-d);color:#fff}
+.scorepick{display:flex;gap:4px;flex-wrap:wrap}
+.scorepick button{width:34px;height:34px;border:1px solid var(--line2);background:var(--bg2);color:var(--muted);border-radius:3px;font-weight:700;font-family:'JetBrains Mono',monospace}
+.scorepick button.on{background:var(--fire);border-color:var(--fire);color:#fff}
+.sugg{position:relative} .sugg .list{position:absolute;left:0;right:0;top:100%;background:var(--panel2);border:1px solid var(--line2);border-top:0;z-index:20;max-height:220px;overflow-y:auto;display:none}
+.sugg .list.on{display:block} .sugg .list div{padding:8px 12px;font-size:13px;cursor:pointer;border-bottom:1px solid rgba(39,48,61,.5)} .sugg .list div:hover{background:var(--bg2);color:var(--gold)}
+.sugg .list small{color:var(--muted);margin-left:6px}
+.kv{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px}
+.kv .k{background:var(--bg2);border:1px solid var(--line);border-radius:3px;padding:10px 12px}
+.kv .k label{display:block;font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:600;margin-bottom:6px}
+.kv .k input{width:100%}
+.foot{color:var(--muted);font-size:11.5px;margin-top:22px;line-height:1.6;text-align:center}
 </style>
 </head>
 <body>
-<div class="wrap">
-
 <header>
-  <h1>Caption <span>Generator</span></h1>
-  <p>Satu file akun, dua caption toko.</p>
+  <div class="wrapwide nav">
+    <div class="tick"></div>
+    <div><h1>Jubel Calculator</h1><div class="sub">Valorant account pricer</div></div>
+    <div class="navbtns">
+      <button class="btn" id="navCalc" onclick="showView('calc')">Kalkulator</button>
+      <button class="btn ghost" id="navAdmin" onclick="openAdmin()">Admin <span class="dot" id="navDot" style="display:none">0</span></button>
+    </div>
+  </div>
 </header>
 
-<div class="grid">
-
-  <!-- ============ LEFT ============ -->
-  <div>
+<!-- ================= CALCULATOR ================= -->
+<div id="view-calc" class="wrap">
+  <div class="grid">
     <div class="card">
-      <h2>1. File akun</h2>
-      <div id="drop">
-        <strong>Taruh file di sini</strong>
-        <small>atau klik untuk pilih file — .csv / .json dari Explorant</small>
-        <input type="file" id="file" accept=".csv,.json,.txt" hidden>
-      </div>
-      <div id="fileInfo"></div>
-      <div class="err" id="err"></div>
-    </div>
-
-    <div class="card">
-      <h2>2. Detail akun</h2>
-      <div class="fields">
-        <div><label for="kodeA"><b>Valjubel</b> · kode akun</label><input id="kodeA" value="VAL-" placeholder="VAL-5132"></div>
-        <div><label for="kodeB"><b>Tokovalo</b> · kode akun</label><input id="kodeB" value="VAL-" placeholder="VAL-2929"></div>
-
-        <div><label for="hargaA"><b>Valjubel</b> · harga</label><input id="hargaA" inputmode="numeric" placeholder="1300000"></div>
-        <div><label for="hargaB"><b>Tokovalo</b> · harga</label><input id="hargaB" inputmode="numeric" placeholder="835000">
-          <p class="hint"><a href="#" id="sameprice" style="color:var(--ink-dim)">Samakan dengan Valjubel</a></p></div>
-
-        <div class="full"><label for="rank">Rank</label><input id="rank" placeholder="Unranked (Platinum 3 Last Act)">
-          <div class="chips" id="rankChips"></div></div>
-
-        <div><label for="level">Level</label><input id="level" placeholder="335"></div>
-        <div><label for="totalAgents">Agent di game <em>— total / bawaan</em></label>
-          <div style="display:flex;gap:8px">
-            <input id="totalAgents" value="30" inputmode="numeric" title="Jumlah agent yang ada di game">
-            <input id="baseAgents" value="5" inputmode="numeric" title="Agent gratis bawaan akun baru, tidak ikut terdata di file export">
-          </div></div>
-        <div><label for="agentA"><b>Valjubel</b> · baris agent</label><input id="agentA" placeholder="Full Agent"></div>
-        <div><label for="agentB"><b>Tokovalo</b> · baris agent</label><input id="agentB" placeholder="-7"></div>
-        <div><label for="region">Region</label><input id="region" value="IDN"></div>
-        <div><label for="changename">Change Name</label>
-          <select id="changename"><option>Ready</option><option>Not Ready</option></select></div>
-        <div><label for="mfa">MFA</label>
-          <select id="mfa"><option>OFF</option><option>ON</option></select></div>
-        <div></div>
-
-        <div class="full"><label for="bundleName">Nama bundle <em>— kosongkan kalau tidak ada</em></label>
-          <input id="bundleName" placeholder="VCT25 x RRQ Bundle"></div>
-        <div class="full"><label for="bundleItems">Isi bundle — satu per baris</label>
-          <textarea id="bundleItems" placeholder="VCT25 x RRQ Classic"></textarea></div>
-      </div>
-    </div>
-
-    <div class="card">
-      <h2>3. Battle Pass <em id="bpCount"></em></h2>
-      <p class="hint" style="margin:0 0 10px">Hanya pass yang dicentang Max yang masuk caption. Centangnya diisi otomatis dari ada tidaknya melee pass itu di inventory, dan bisa Anda ubah manual.</p>
-      <div class="list" id="bpList" style="max-height:240px"><div class="empty">Belum ada file.</div></div>
-      <div style="margin-top:12px">
-        <label for="bpExtra">Tambah BP manual — satu per baris</label>
-        <textarea id="bpExtra" placeholder="Task Force 809 (Max)" style="min-height:52px"></textarea>
-      </div>
-    </div>
-
-    <div class="card">
-      <h2>4. Skin yang ditampilkan <em id="skinCount"></em></h2>
-      <div class="toolbar">
-        <input id="search" placeholder="Cari skin…">
-        <select id="sortMode" style="width:auto;flex:none"><option value="tier">Urut: tier</option><option value="weapon">Urut: senjata</option></select>
-        <button class="btn ghost" id="checkVisible">Centang yang tampil</button>
-        <button class="btn ghost" id="clearSel">Kosongkan</button>
-      </div>
-      <div class="tierbar" id="tierbar"></div>
-      <div class="list" id="skinList"><div class="empty">Belum ada file. Upload dulu di atas.</div></div>
-      <div style="margin-top:16px">
-        <div class="out-head" style="margin-bottom:6px">
-          <label style="margin:0">Urutan tampil di caption</label>
-          <button class="btn ghost" id="resortSel">Urutkan senjata</button>
+      <div class="hd"><span class="n">01</span> Input Akun</div>
+      <div class="bd">
+        <label class="fld">Jenis Akun</label>
+        <div class="seg" id="acctType" style="margin-bottom:14px"><button data-v="skin" class="on">Ada Skin</button><button data-v="bare">Polosan (tanpa skin)</button></div>
+        <label class="fld" for="skins">Daftar Skin <span style="color:var(--muted2);font-weight:400;text-transform:none;letter-spacing:0">(paste apa adanya)</span></label>
+        <textarea id="skins" placeholder="1. Reaver Vandal&#10;2. Prime Vandal&#10;3. Oni Phantom&#10;4. Reaver Karambit&#10;-&#10;BP:&#10;1. Velocity (Max)"></textarea>
+        <div class="hint">Bagian setelah <b>BP:</b> dan baris bot otomatis diabaikan. Typo dicocokkan otomatis — kalau ragu, program akan tanya.</div>
+        <div class="row">
+          <div><label class="fld">Status Premier</label>
+            <div class="seg" id="premier"><button data-v="0" class="on">Ga Stuck</button><button data-v="1">Stuck</button></div></div>
+          <div><label class="fld">Rank</label><select id="rank"></select></div>
         </div>
-        <p class="hint" style="margin:0 0 8px">Angka = skin yang dimiliki dibanding isi bundle aslinya. Hanya bundle lengkap yang nyala otomatis; klik untuk memaksa nyala/mati.</p>
-        <div class="chips" id="groupChips" style="margin:0 0 10px"></div>
-        <div class="list" id="picked" style="max-height:220px"><div class="empty">Belum ada yang dipilih.</div></div>
-      </div>
-      <div style="margin-top:12px">
-        <label for="custom">Tambah skin manual — satu per baris</label>
-        <textarea id="custom" placeholder="XERØFANG Vandal" style="min-height:52px"></textarea>
+        <div class="row" style="margin-top:12px">
+          <div><label class="fld">Sumber Akun</label><select id="source"></select><div class="hint" id="sourceHint"></div></div>
+          <div></div>
+        </div>
+        <div class="statusline" id="calcStatus"></div>
       </div>
     </div>
-  </div>
-
-  <!-- ============ RIGHT ============ -->
-  <div class="sticky">
     <div class="card">
-      <div class="tabs" role="tablist">
-        <button class="tab" data-store="A" role="tab" aria-selected="true">Valjubel</button>
-        <button class="tab" data-store="B" role="tab" aria-selected="false">Tokovalo</button>
-        <button class="gear" id="openTpl" title="Edit template caption" aria-label="Edit template caption">⚙</button>
-      </div>
-
-      <div class="pane" data-store="A">
-        <div class="out-head">
-          <span class="count" id="countA"></span>
-          <div style="display:flex;gap:8px">
-            <button class="btn ghost" data-dl="A">Unduh .txt</button>
-            <button class="btn" data-copy="A">Salin</button>
+      <div class="hd"><span class="n">02</span> Estimasi Harga <span class="r" id="settingsInfo"></span></div>
+      <div class="bd">
+        <div class="results">
+          <div class="out buy">
+            <div class="lab"><span class="d"></span> Harga Beli <span class="rule">aturan</span></div>
+            <div class="rows">
+              <div class="pr main"><span class="k">Tawar di</span><span class="v cp" id="buyOffer" title="klik untuk salin">—</span></div>
+              <div class="pr"><span class="k">Maksimal</span><span class="v cp" id="buyMax" title="klik untuk salin">—</span></div>
+            </div>
+            <div class="note">Tawar persis angka atas. Naik boleh, tapi jangan lewati maksimal.</div>
+          </div>
+          <div class="out sell">
+            <div class="lab"><span class="d"></span> Harga Jual <span class="badge" id="hvBadge" style="display:none"></span></div>
+            <div class="rows">
+              <div class="pr"><span class="k">Atas <small>market rame</small></span><span class="v cp" id="sellTop" title="klik untuk salin">—</span></div>
+              <div class="pr main"><span class="k">Rekomendasi</span><span class="v cp" id="sellReco" title="klik untuk salin">—</span></div>
+              <div class="pr"><span class="k">Bawah <small>minimal</small></span><span class="v cp" id="sellBottom" title="klik untuk salin">—</span></div>
+            </div>
+            <div class="note">Pilih satu sesuai kondisi. Jangan pasang di bawah angka Bawah.</div>
           </div>
         </div>
-        <div class="caption" id="capA" contenteditable="true" spellcheck="false"></div>
+        <div class="profit"><span class="l">Estimasi Profit / Akun</span><span class="v" id="profitVal">—</span></div>
+        <div id="warnBox"></div>
+        <details class="basis" id="basis">
+          <summary><span>▸ Dasar perhitungan</span><span class="mvs">Nilai pasar <b id="mvVal">—</b></span></summary>
+          <div class="ledger" id="ledger"><div class="cempty">Tempel daftar skin untuk mulai menghitung.</div></div>
+        </details>
       </div>
+    </div>
+  </div>
+</div>
 
-      <div class="pane" data-store="B" hidden>
-        <div class="out-head">
-          <span class="count" id="countB"></span>
-          <div style="display:flex;gap:8px">
-            <button class="btn ghost" data-dl="B">Unduh .txt</button>
-            <button class="btn blue" data-copy="B">Salin</button>
-          </div>
+<!-- ================= ADMIN ================= -->
+<div id="view-admin" class="wrapwide" style="display:none">
+  <div class="tabs">
+    <button data-t="notif" class="on" onclick="tab('notif')">🔔 Notifikasi <span class="cnt" id="cntNotif" style="display:none">0</span></button>
+    <button data-t="trend" onclick="tab('trend')">🔥 Skin Trending</button>
+    <button data-t="weights" onclick="tab('weights')">⚖ Bobot Skin</button>
+    <button data-t="global" onclick="tab('global')">⚙ Setelan Global</button>
+    <button data-t="alias" onclick="tab('alias')">✎ Alias Typo</button>
+    <button data-t="audit" onclick="tab('audit')">🕘 Jejak Audit</button>
+  </div>
+
+  <!-- NOTIF -->
+  <div class="sec on" id="sec-notif"><div id="notifBody"></div></div>
+
+  <!-- TRENDING / OVERRIDES -->
+  <div class="sec" id="sec-trend">
+    <div class="card" style="margin-bottom:16px"><div class="hd"><span class="n">+</span> Tandai Skin Trending / Override</div>
+      <div class="bd">
+        <div class="row3">
+          <div class="sugg" style="grid-column:span 2"><label class="fld">Nama Skin</label><input type="text" id="ovSkin" placeholder="ketik untuk cari... (mis. Prelude to Chaos Vandal)" autocomplete="off"><div class="list" id="ovList"></div><div class="hint" id="ovBase"></div></div>
+          <div><label class="fld">Jenis Override</label><select id="ovType"><option value="hype">Skor hype (1–10)</option><option value="value">Nilai manual (Rp)</option></select></div>
         </div>
-        <div class="caption" id="capB" contenteditable="true" spellcheck="false"></div>
+        <div class="row3">
+          <div id="ovScoreWrap"><label class="fld">Seberapa rame? (1 = agak, 10 = sangat)</label><div class="scorepick" id="ovScore"></div><div class="hint" id="ovScoreHint"></div></div>
+          <div id="ovValueWrap" style="display:none"><label class="fld">Nilai jual baru (Rp)</label><input type="number" id="ovValue" step="1000" placeholder="cth 180000"></div>
+          <div><label class="fld">Berlaku sampai</label><input type="date" id="ovExp"><div class="hint">Default 30 hari. Setelah lewat, otomatis kembali ke nilai dasar.</div></div>
+          <div><label class="fld">Alasan (opsional)</label><input type="text" id="ovReason" placeholder="cth: bundle baru rilis, rame di TikTok"></div>
+        </div>
+        <div style="margin-top:14px;display:flex;gap:10px"><button class="btn primary" onclick="addOverride()">Tambah Override</button></div>
       </div>
-
-      <p class="count" style="margin:10px 0 0">Kotak caption bisa diedit langsung. Mengubah isian atau template akan menimpa editan.</p>
     </div>
-
+    <div class="tablewrap"><table><thead><tr><th>Skin</th><th>Jenis</th><th>Dasar</th><th>Efektif</th><th>Berlaku sampai</th><th>Status</th><th>Alasan</th><th>Aksi</th></tr></thead><tbody id="ovTable"></tbody></table></div>
   </div>
 
-</div>
-</div>
-
-<div class="overlay" id="tplModal" hidden>
-  <div class="modal" role="dialog" aria-modal="true" aria-label="Template caption">
-    <div class="modal-head">
-      <h2>Template caption <em>— tulis bebas, sisipkan kode di bawah</em></h2>
-      <button class="mini x" id="closeTpl" title="Tutup">✕</button>
+  <!-- WEIGHTS -->
+  <div class="sec" id="sec-weights">
+    <div class="toolbar">
+      <div class="grow"><label class="fld">Cari skin</label><input type="text" id="wSearch" placeholder="nama skin..." oninput="renderWeights()"></div>
+      <div><label class="fld">Senjata</label><select id="wWeapon" onchange="renderWeights()"><option value="">Semua</option></select></div>
+      <div><label class="fld">Tampilkan</label><select id="wFilter" onchange="renderWeights()"><option value="">Semua</option><option value="ov">Ada override</option><option value="edit">Diedit admin</option><option value="top">Top 50</option></select></div>
     </div>
+    <div class="hint" style="margin-bottom:10px">Klik angka <b>Dasar</b> untuk mengedit nilai dasar skin (tersimpan sebagai edit admin, model asli tetap utuh). Urut default: bobot efektif tertinggi.</div>
+    <div class="tablewrap"><table><thead><tr><th>#</th><th class="s" onclick="wSort('name')">Skin</th><th>Senjata</th><th class="s" onclick="wSort('base')">Dasar (Rp)</th><th>Override</th><th class="s" onclick="wSort('eff')">Efektif (Rp)</th></tr></thead><tbody id="wTable"></tbody></table></div>
+  </div>
 
-    <div class="tpltabs">
-      <button class="tpltab" data-tplstore="A" aria-selected="true">Valjubel</button>
-      <button class="tpltab" data-tplstore="B" aria-selected="false">Tokovalo</button>
-    </div>
-
-    <div class="chips" id="phChips"></div>
-
-    <div style="margin-top:14px">
-      <textarea class="tpl" id="tplA"></textarea>
-      <textarea class="tpl" id="tplB" hidden></textarea>
-    </div>
-
-    <div style="margin-top:16px;border-top:1px solid var(--line);padding-top:14px">
-      <label style="margin-bottom:8px">Cadangan pengaturan <em style="color:var(--ink-dim)">— template, kamus BP, region, total agent</em></label>
-      <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <button class="btn ghost" id="exportSet">Ekspor ke file</button>
-        <button class="btn ghost" id="importSet">Impor dari file</button>
-        <input type="file" id="importFile" accept=".json" hidden>
+  <!-- GLOBAL -->
+  <div class="sec" id="sec-global">
+    <div class="card" style="margin-bottom:16px"><div class="hd"><span class="n">⚙</span> Faktor Harga</div><div class="bd">
+      <div class="kv">
+        <div class="k"><label>Beli · Tawar (× nilai pasar)</label><input type="number" id="g_buy_factor" step="0.01" min="0.1" max="0.9"></div>
+        <div class="k"><label>Beli · Maksimal (× nilai pasar)</label><input type="number" id="g_buy_max" step="0.01" min="0.1" max="0.95"></div>
+        <div class="k"><label>Jual · Atas (× nilai pasar)</label><input type="number" id="g_sell_top" step="0.01" min="0.5" max="2"></div>
+        <div class="k"><label>Jual · Rekomendasi (× nilai pasar)</label><input type="number" id="g_sell_factor" step="0.01" min="0.5" max="2"></div>
+        <div class="k"><label>Jual · Bawah (× nilai pasar)</label><input type="number" id="g_sell_bottom" step="0.01" min="0.5" max="2"></div>
+        <div class="k"><label>Pembulatan harga</label><select id="g_rounding"><option value="kagok">Kagok (hindari ...0.000 & ...9.000)</option><option value="ribuan">Ribuan biasa</option></select></div>
+        <div class="k"><label>Kondisi pasar (×)</label><input type="number" id="g_market" step="0.01" min="0.3" max="3"></div>
+        <div class="k"><label>Premium sultan (kekuatan ×)</label><input type="number" id="g_hv_strength" step="0.1" min="0" max="3"></div>
+        <div class="k"><label>Potongan premier stuck min (Rp)</label><input type="number" id="g_prem_lo" step="5000"></div>
+        <div class="k"><label>Potongan premier stuck max (Rp)</label><input type="number" id="g_prem_hi" step="5000"></div>
+        <div class="k"><label>Hype: +% per poin skor</label><input type="number" id="g_hype_step" step="0.01" min="0" max="0.5"><div class="hint">0.05 → skor 10 = +50%</div></div>
+        <div class="k"><label>Hype: masa berlaku default (hari)</label><input type="number" id="g_hype_days" step="1" min="1"></div>
+        <div class="k"><label>Polosan: beli min (Rp)</label><input type="number" id="g_bare_lo" step="1000"></div>
+        <div class="k"><label>Polosan: beli max (Rp)</label><input type="number" id="g_bare_hi" step="1000"></div>
+        <div class="k"><label>Polosan: harga jual (Rp)</label><input type="number" id="g_bare_sell" step="1000"></div>
       </div>
-      <p class="hint" id="setStatus">Pengaturan tersimpan otomatis di browser ini.</p>
+      <div class="hint" style="margin-top:10px">Perubahan berlaku ke semua pengguna setelah <b>Simpan</b>.</div>
+    </div></div>
+    <div class="row" style="margin-top:0">
+      <div class="card"><div class="hd"><span class="n">👑</span> Kurva Premium Sultan <span class="r">nilai pasar → pengali jual</span></div><div class="bd"><table id="hvTable"><thead><tr><th>Nilai pasar (Rp)</th><th>× jual</th><th></th></tr></thead><tbody></tbody></table><button class="btn sm" style="margin-top:10px" onclick="hvAddRow()">+ titik</button><div class="hint">Di bawah titik pertama = ×1.00 (tidak berubah). Interpolasi mulus antar titik.</div></div></div>
+      <div class="card"><div class="hd"><span class="n">◈</span> Pengali Tier <span class="r">untuk skin yang belum ada di model</span></div><div class="bd"><div class="kv" id="tierBox"></div><div class="hint">Skin tak terdata dihargai: rata-rata jenis senjata × pengali tier resminya (dari valorant-api). Tier: Select &lt; Deluxe &lt; Premium &lt; Exclusive &lt; Ultra.</div></div></div>
     </div>
+    <div class="card" style="margin-top:16px"><div class="hd"><span class="n">⇄</span> Sumber Akun <span class="r">tambahan % harga beli per sumber</span></div><div class="bd">
+      <table id="srcTable"><thead><tr><th>Sumber</th><th>Tawar +%</th><th>Maksimal +%</th><th></th></tr></thead><tbody></tbody></table>
+      <button class="btn sm" style="margin-top:10px" onclick="srcAdd()">+ sumber</button>
+      <div class="hint">Contoh: Facebook +10% / +25% → tawaran dibuka 10% lebih tinggi, batas maksimal 25% lebih tinggi. Harga jual tidak terpengaruh.</div>
+    </div></div>
+    <div class="card" style="margin-top:16px"><div class="hd"><span class="n">⇣</span> Kurva Konsentrasi <span class="r">skin numpuk di 1 senjata</span></div><div class="bd"><div id="concBox" style="display:flex;gap:8px;flex-wrap:wrap"></div><div class="hint">Skin termahal tiap senjata ×1.00, ke-2 ×0.85, dst. Dipakai untuk menahan harga akun yang skinnya tidak menyebar.</div></div></div>
+  </div>
 
-    <div class="modal-foot">
-      <button class="btn ghost" id="resetTpl">Kembalikan bawaan</button>
-      <button class="btn" id="doneTpl">Selesai</button>
-    </div>
+  <!-- ALIAS -->
+  <div class="sec" id="sec-alias">
+    <div class="card" style="margin-bottom:16px"><div class="hd"><span class="n">+</span> Tambah Alias (typo → nama resmi)</div><div class="bd">
+      <div class="row3"><div><label class="fld">Tulisan salah / typo</label><input type="text" id="alFrom" placeholder="cth: prelud chaos vandal"></div>
+      <div class="sugg"><label class="fld">Nama resmi</label><input type="text" id="alTo" placeholder="ketik untuk cari..." autocomplete="off"><div class="list" id="alList"></div></div>
+      <div style="display:flex;align-items:end"><button class="btn primary" onclick="addAlias()">Tambah</button></div></div>
+      <div class="hint">Pencocokan fuzzy sudah menangani sebagian besar typo. Alias dipakai untuk kasus yang tetap gagal atau nama panggilan (mis. "PTC" → Prelude to Chaos Vandal).</div>
+    </div></div>
+    <div class="tablewrap"><table><thead><tr><th>Ditulis</th><th>→ Nama resmi</th><th></th></tr></thead><tbody id="alTable"></tbody></table></div>
+  </div>
+
+  <!-- AUDIT -->
+  <div class="sec" id="sec-audit">
+    <div class="tablewrap"><table><thead><tr><th>Waktu</th><th>Item</th><th>Dari</th><th>Ke</th></tr></thead><tbody id="auditTable"></tbody></table></div>
+  </div>
+
+  <div class="savebar">
+    <button class="btn primary" onclick="saveSettings()">💾 Simpan Setelan (global)</button>
+    <button class="btn sm teal" onclick="exportSettings()">⬇ Download bobot lengkap</button>
+    <button class="btn sm ghost" onclick="document.getElementById('impFile').click()">⬆ Upload bobot / setelan</button><button class="btn sm ghost" onclick="resetModel()" title="kembali ke model yang tertanam di index.html">↺ Model bawaan</button>
+    <input type="file" id="impFile" accept="application/json" style="display:none" onchange="importSettings(event)">
+    <button class="btn sm ghost" onclick="syncCanonical(true)">↻ Sync daftar skin resmi</button>
+    <span class="st" id="saveStatus"></span>
   </div>
 </div>
+
+<!-- PIN MODAL -->
+<div class="overlay" id="pinModal"><div class="modal"><div class="mh"><span>Masuk Admin</span><button class="x" onclick="closePin()">×</button></div>
+  <div class="mb"><div class="errbox" id="pinErr">PIN salah.</div><label class="fld">PIN</label><input type="password" id="pinInput" placeholder="••••" autocomplete="off"><div class="hint">Halaman admin: atur skin trending, bobot, dan setelan global.</div></div>
+  <div class="mf"><button class="btn ghost" onclick="closePin()">Batal</button><button class="btn primary" onclick="checkPin()">Masuk</button></div></div></div>
+
+<div class="toast" id="toast"></div>
 
 <script>
-(function(){
-"use strict";
+/* =====================================================================
+   MODEL DASAR (hasil training) — jangan diedit manual di sini.
+   Edit bobot lewat halaman Admin (tersimpan sebagai lapisan terpisah).
+   ===================================================================== */
+const MODEL = {"model_version": "2026-09-15", "base_value": 116000, "buy_factor": 0.36, "buy_spread": 0.06, "sell_factor": 0.97, "sell_spread": 0.11, "highvalue_premium": {"strength": 1.0, "points": [[2000000, 1.0], [3000000, 1.12], [4000000, 1.25], [5000000, 1.35], [7000000, 1.5], [10000000, 1.65]]}, "tier_mult": {"Select": 0.5, "Deluxe": 0.7, "Premium": 1.0, "Exclusive": 1.4, "Ultra": 1.6}, "hype": {"step": 0.05, "default_days": 30}, "premier_penalty_lo": 25000, "premier_penalty_hi": 50000, "concentration": [1, 0.85, 0.7, 0.55, 0.45, 0.35, 0.3], "rank_adj": {"Radiant": 50000, "Immortal": 25000, "Ascendant": 12000, "Diamond": 6000, "Platinum": 0, "Gold": 0, "Silver": 0, "Bronze": 0, "Iron": 0, "Unranked": 0}, "weapon_class": {"Ares": 176000, "Bucky": 109000, "Bulldog": 138000, "Classic": 123000, "Frenzy": 130000, "Ghost": 109000, "Guardian": 117000, "Judge": 88000, "Marshal": 53000, "Melee": 231000, "Odin": 80000, "Operator": 70000, "Other": 50000, "Outlaw": 90000, "Phantom": 119000, "Sheriff": 135000, "Shorty": 68000, "Spectre": 98000, "Stinger": 2000, "Vandal": 114000}, "skins": {"5 Years // Beta Remastered Knife": 138000, "Abyssal Phantom": 71000, "Abyssal Spectre": 58000, "Aemondir Bucky": 66000, "Aemondir Bulldog": 83000, "Aemondir Sheriff": 81000, "Aemondir Vandal": 158000, "Aeris Vandal": 68000, "Altitude Vandal": 68000, "Araxys Bio Harvester": 138000, "Araxys Bio-Atomizers": 70000, "Araxys BullDog": 83000, "Araxys Bulldog": 129000, "Araxys Guardian": 119000, "Araxys Operator": 110000, "Araxys Outlaw": 62000, "Araxys Phantom": 96000, "Araxys Sheriff": 81000, "Araxys Shorty": 109000, "Araxys Vandal": 116000, "Arcane Gauntlets": 93000, "Arcane Sheriff": 123000, "Arcane Vandal": 68000, "Aristocrat Sheriff": 81000, "Aristocrat Vandal": 79000, "Avalanche Spectre": 58000, "Ayakashi Ghost": 106000, "Ayakashi Phantom": 146000, "Black.Market Bulldog": 83000, "Black.Market Butterfly Knife": 138000, "Black.Market Classic": 75000, "Black.Market Vandal": 71000, "Blackspyre Ares": 106000, "Blackspyre Divide": 77000, "Blackspyre Phantom": 114000, "Blackspyre Sheriff": 81000, "Blackspyre Spectre": 81000, "Blackthorn Blades": 138000, "Blackthorn Classic": 86000, "Blackthorn Guardian": 96000, "Blackthorn Marshal": 108000, "Blackthorn Vandal": 165000, "Blade of Aemondir": 138000, "Blade of Chaos": 138000, "Blade of Serket": 138000, "Blades of Imperium": 138000, "Blades of Primordia": 138000, "BlastX Frenzy": 78000, "BlastX Odin": 112000, "BlastX Phantom": 84000, "BlastX Spectre": 126000, "Bolt Frenzy": 78000, "Bolt Knife": 138000, "Bolt Outlaw": 112000, "Bolt Phantom": 94000, "Bolt Spectre": 72000, "Broken Blade of the Ruined King": 138000, "Bubblegum Deathwish Chainsaw": 138000, "Bubblegum Deathwish Operator": 63000, "Bubblegum Deathwish Phantom": 80000, "Bubblegum Deathwish Sheriff": 81000, "Bubblegum Deathwish Stinger": 31000, "CYRAX Fanblade": 138000, "CYRAX Ghost": 66000, "CYRAX Guardian": 71000, "CYRAX Stinger": 94000, "CYRAX Vandal": 118000, "Catrina": 30000, "Catrina Knife": 138000, "Celestial Fan": 150000, "Champion 2022 Phantom": 71000, "Champion 2023 Vandal": 68000, "Champion 2024 Blade": 138000, "Champion 2024 Phantom": 71000, "Champion 2025 Vandal": 68000, "Champions 2021 Karambit": 239000, "Champions 2021 Vandal": 325000, "Champions 2022 Butterfly Knife": 170000, "Champions 2022 Phantom": 110000, "Champions 2023 Kunai": 266000, "Champions 2023 Vandal": 109000, "Champions 2024 Blade": 156000, "Champions 2024 Phantom": 110000, "Champions 2025 Butterfly Knife": 138000, "Champions 2025 Vandal": 162000, "ChronoVoid Judge": 58000, "ChronoVoid Phantom": 71000, "ChronoVoid Sheriff": 106000, "ChronoVoid Vandal": 79000, "Chronovoid Phantom": 71000, "Chronovoid Vandal": 68000, "Combat Crafts Phantom": 71000, "Convex Operator": 42000, "Crimsonbeast Vandal": 68000, "Cryostasis Bulldog": 83000, "Cryostasis Classic": 75000, "Cryostasis Impact Drill": 138000, "Cryostasis Operator": 42000, "Cryostasis Vandal": 129000, "Cyrax Vandal": 68000, "Daydreams Crowbar": 45000, "Divergence Classic": 75000, "Divergence Judge": 71000, "Divergence Operator": 65000, "Divergence Staff": 62000, "Divergence Vandal": 115000, "Dolmir's Judgement": 63000, "Dolmir's Revenge Classic": 75000, "Dolmir's Revenge Guardian": 91000, "Dolmir's Revenge Odin": 94000, "Dolmir's Revenge Vandal": 142000, "Doodle Buds Phantom": 71000, "Doombringer Judge": 52000, "Doombringer Odin": 48000, "Doombringer Phantom": 71000, "Doombringer Sheriff": 81000, "EX.O Edge": 111000, "EX.O Outlaw": 82000, "EX.O Sheriff": 114000, "EX.O Spectre": 58000, "EX.O Vandal": 143000, "Ego Vandal": 68000, "ElderFlame Operator": 42000, "ElderFlame Vandal": 68000, "Elderflame Dagger": 163000, "Elderflame Frenzy": 78000, "Elderflame Judge": 158000, "Elderflame Operator": 88000, "Elderflame Vandal": 141000, "Endeavour Ares": 106000, "Endeavour Bulldog": 83000, "Endeavour Ghost": 66000, "Endeavour Operator": 44000, "Endeavour Vandal": 76000, "Equilibrium": 61000, "Equilibrium Fan": 138000, "Eternal Sovereign": 79000, "Evori Dreamwings Ghost": 84000, "Evori Dreamwings Odin": 72000, "Evori Dreamwings Spectre": 106000, "Evori Dreamwings Vandal": 130000, "Evori's Spellcaster": 138000, "EvoriDreamwings Vandal": 68000, "Flail of Chaos": 37000, "Forsaken Classic": 131000, "Forsaken Operator": 96000, "Forsaken Ritual Blade": 138000, "Forsaken Spectre": 174000, "Forsaken Vandal": 86000, "G.U.N Operator": 42000, "Gaia Ghost": 66000, "Gaia Guardian": 70000, "Gaia Marshal": 32000, "Gaia Phantom": 71000, "Gaia Vandal": 111000, "Gaia's Fury": 94000, "Gaia's Vengeance Ares": 106000, "Gaia's Vengeance Bucky": 78000, "Gaia's Vengeance Ghost": 123000, "Gaia's Vengeance Guardian": 96000, "Gaia's Vengeance Marshal": 77000, "Gaia's Vengeance Phantom": 112000, "Gaia's Vengeance Shorty": 101000, "Gaia's Vengeance Vandal": 115000, "Gaia's Wrath": 65000, "Gaia’s Vengeance Ghost": 66000, "Gaia’s Vengeance Vandal": 68000, "Galleria Phantom": 71000, "GlitchPop Classic": 75000, "GlitchPop Dagger": 138000, "GlitchPop Judge": 52000, "GlitchPop Operator": 42000, "GlitchPop Phantom": 71000, "GlitchPop Vandal": 68000, "Glitchpop Axe": 149000, "Glitchpop Bulldog": 83000, "Glitchpop Classic": 75000, "Glitchpop Dagger": 138000, "Glitchpop Frenzy": 161000, "Glitchpop Judge": 144000, "Glitchpop Odin": 92000, "Glitchpop Operator": 119000, "Glitchpop Phantom": 108000, "Glitchpop Vandal": 82000, "Gravitational Uranium Neuroblaster Baton": 138000, "Gravitational Uranium Neuroblaster Bucky": 80000, "Gravitational Uranium Neuroblaster Classic": 136000, "Gravitational Uranium Neuroblaster Operator": 81000, "Gravitational Uranium Neuroblaster Spectre": 64000, "Hack": 36000, "Helix Daggers": 138000, "Helix Phantom": 122000, "Helix Spectre": 58000, "Holo Meridian Operator": 42000, "Holo Meridian Sheriff": 105000, "Holo Meridian Vandal": 94000, "Holoflare": 67000, "Horizon Vandal": 68000, "Hu Else": 30000, "Ignite Fan": 138000, "Imperium Judge": 163000, "Imperium Operator": 92000, "Imperium Sheriff": 81000, "Imperium Vandal": 92000, "Infantry Ares": 106000, "Infantry Ghost": 80000, "Infantry Guardian": 70000, "Infantry Operator": 72000, "Infantry Spectre": 80000, "Intergrade Blade": 138000, "Intergrade Operator": 42000, "Ion Ares": 106000, "Ion Bucky": 135000, "Ion Energy Sword": 138000, "Ion Frenzy": 110000, "Ion Karambit": 138000, "Ion Operator": 101000, "Ion Phantom": 80000, "Ion Sheriff": 120000, "Ion Spectre": 104000, "Ion Vandal": 105000, "Kogitsune": 108000, "Kuronami Ghost": 120000, "Kuronami Guardian": 126000, "Kuronami Marshal": 130000, "Kuronami Naru-Kami": 146000, "Kuronami No Yaiba": 84000, "Kuronami Operator": 120000, "Kuronami Phantom": 142000, "Kuronami Sheriff": 130000, "Kuronami Spectre": 104000, "Kuronami Vandal": 122000, "Kuronami no Yaiba": 183000, "Luna's Descent": 30000, "Luxe Ghost": 66000, "Luxe Knife": 138000, "Luxe Operator": 42000, "Luxe Spectre": 58000, "Luxe Vandal": 68000, "MK.VII Liberty Combat Knife": 138000, "MagePunk Vandal": 68000, "Magepunk Ares": 106000, "Magepunk Bucky": 157000, "Magepunk Ghost": 85000, "Magepunk Guardian": 70000, "Magepunk Marshal": 32000, "Magepunk Operator": 101000, "Magepunk Phantom": 71000, "Magepunk Sherif": 30000, "Magepunk Sheriff": 81000, "Magepunk Shock Gauntlet": 30000, "Magepunk Sparkswitch": 89000, "Magepunk Spectre": 90000, "Magepunk Vandal": 112000, "Minima Ares": 106000, "Minima Karambit": 138000, "Minima Operator": 84000, "Minima Phantom": 130000, "Minima Sheriff": 101000, "Minima Spectre": 80000, "Minima Vandal": 68000, "Mystbloom Ares": 106000, "Mystbloom Fanblade": 138000, "Mystbloom Ghost": 66000, "Mystbloom Judge": 90000, "Mystbloom Kunai": 138000, "Mystbloom Operator": 80000, "Mystbloom Outlaw": 106000, "Mystbloom Phantom": 86000, "Mystbloom Sheriff": 115000, "Mystbloom Vandal": 142000, "NO LIMITS Bat": 138000, "Nebula Knife": 138000, "Nebula Phantom": 71000, "Neo Frontier Axe": 138000, "Neo Frontier Marshal": 78000, "Neo Frontier Odin": 162000, "Neo Frontier Phantom": 75000, "Neo Frontier Sherif": 30000, "Neo Frontier Sheriff": 93000, "Neo Frontier Vandal": 74000, "NeoFrontier Axe": 138000, "NeoFrontier Marshal": 32000, "NeoFrontier Odin": 51000, "NeoFrontier Phantom": 71000, "NeoFrontier Sheriff": 81000, "Neptune Bulldog": 83000, "Neptune Classic": 75000, "Neptune Guardian": 70000, "Neptune Odin": 48000, "Neptune Phantom": 71000, "Neptune Shorty": 70000, "Neptune Spectre": 58000, "Neptune Vandal": 94000, "Noctornum Phantom": 71000, "Nocturnum Bulldog": 83000, "Nocturnum Classic": 75000, "Nocturnum Marshal": 92000, "Nocturnum Phantom": 109000, "Nocturnum Scythe": 138000, "Nunca Olvidados Vandal": 68000, "ORA by OneTap Knife": 138000, "ORA by OneTap Operator": 81000, "ORA by OneTap Phantom": 132000, "ORA by OneTap Sheriff": 131000, "ORA by OneTap Vandal": 154000, "Oni Ares": 106000, "Oni Bucky": 69000, "Oni BullDog": 83000, "Oni Bulldog": 83000, "Oni Claw": 138000, "Oni Frenzy": 83000, "Oni Guardian": 131000, "Oni Phantom": 78000, "Oni Shorty": 146000, "Oni Vandal": 79000, "Onimaru Kunitsuna": 116000, "Origin Bucky": 101000, "Origin Crescent Blade": 138000, "Origin Frenzy": 117000, "Origin Operator": 86000, "Origin Vandal": 105000, "Orion Odin": 48000, "Orion Phantom": 71000, "Orion Sword": 138000, "Orion Vandal": 68000, "Overdrive Blade": 138000, "Overdrive Bucky": 102000, "Overdrive Sheriff": 81000, "Overdrive Stinger": 109000, "Overdrive Vandal": 169000, "PTC Vandal": 83000, "Personal Administrative Melee Unit": 138000, "Phaseguard Bulldog": 83000, "Phaseguard Ghost": 108000, "Phaseguard Outlaw": 72000, "Phaseguard Splitter": 61000, "Phaseguard Vandal": 172000, "Power Fist": 138000, "Prelude to Chaos Bulldog": 83000, "Prelude to Chaos Operator": 89000, "Prelude to Chaos Phantom": 112000, "Prelude to Chaos Sheriff": 81000, "Prelude to Chaos Shorty": 210000, "Prelude to Chaos Spectre": 58000, "Prelude to Chaos Stinger": 172000, "Prelude to Chaos Vandal": 130000, "Prime 2.0 Karambit": 138000, "Prime 2.0 Odin": 126000, "Prime 2.0 Phantom": 103000, "Prime Axe": 138000, "Prime Bucky": 108000, "Prime Classic": 75000, "Prime Frenzy": 78000, "Prime Guardian": 103000, "Prime Karambit": 138000, "Prime Odin": 50000, "Prime Phantom": 71000, "Prime Spectre": 58000, "Prime Vandal": 93000, "Prime//2.0 Bucky": 75000, "Prime//2.0 Frenzy": 78000, "Prime//2.0 Karambit": 141000, "Prime//2.0 Odin": 90000, "Prime//2.0 Phantom": 176000, "Primordium Phantom": 135000, "Primordium Shorty": 41000, "Primordium Spectre": 58000, "Primordium Vandal": 120000, "Prism Ghost": 66000, "Prism II Vandal": 68000, "Prism Operator": 88000, "Prism Phantom": 71000, "Prism Spectre": 58000, "Prosperity": 138000, "Prosperity And Demise": 138000, "Protocol 781-A Bulldog": 122000, "Protocol 781-A Phantom": 152000, "Protocol 781-A Sheriff": 82000, "Protocol 781-A Spectre": 95000, "Protocol Bulldog": 83000, "Protocol Phantom": 71000, "Protocol Sheriff": 81000, "Protocol Spectre": 58000, "R.E.S Ghost": 66000, "R.E.S Phantom": 71000, "RES Phantom": 71000, "RGX 11z Pro Blade": 156000, "RGX 11z Pro Classic": 82000, "RGX 11z Pro FireFly": 83000, "RGX 11z Pro Firefly": 118000, "RGX 11z Pro Frenzy": 189000, "RGX 11z Pro Guardian": 125000, "RGX 11z Pro Karambit": 138000, "RGX 11z Pro Operator": 78000, "RGX 11z Pro Outlaw": 160000, "RGX 11z Pro Phantom": 77000, "RGX 11z Pro Sheriff": 81000, "RGX 11z Pro Spectre": 75000, "RGX 11z Pro Stinger": 172000, "RGX 11z Pro Vandal": 68000, "RGX Blade": 138000, "RGX Classic": 83000, "RGX Firefly": 30000, "RGX Karambit": 138000, "RGX Operator": 72000, "RGX Outlaw": 54000, "RGX Phantom": 71000, "RGX Sheriff": 81000, "RGX Spectre": 58000, "RGX Vandal": 101000, "Radiant Crisis 001 Baseball Bat": 138000, "Radiant Crisis 001 Bucky": 116000, "Radiant Crisis 001 Classic": 75000, "Radiant Crisis 001 Phantom": 71000, "Radiant Crisis 001 Spectre": 95000, "Radiant Crisis Classic": 75000, "Radiant Crisis Phantom": 71000, "Radiant Crisis Spectre": 58000, "Radiant Entertainment System Bulldog": 83000, "Radiant Entertainment System Ghost": 109000, "Radiant Entertainment System Operator": 70000, "Radiant Entertainment System Phantom": 74000, "Reaver Bandit": 150000, "Reaver Butterfly Knife": 138000, "Reaver Ghost": 119000, "Reaver Guardian": 121000, "Reaver Karambit": 163000, "Reaver Knife": 138000, "Reaver Odin": 103000, "Reaver Operator": 81000, "Reaver Phantom": 125000, "Reaver Sheriff": 119000, "Reaver Spectre": 97000, "Reaver Vandal": 104000, "Recon Balisong": 138000, "Recon Ghost": 85000, "Recon Guardian": 70000, "Recon Phantom": 120000, "Recon Spectre": 122000, "Relic Stone Daggers": 138000, "Relic of the Sentinel": 30000, "Reverie Sword": 138000, "Rogue Bandit": 80000, "Rogue Bucky": 74000, "Rogue Operator": 72000, "Rogue Push Daggers": 138000, "Rogue Vandal": 134000, "Ruination Ghost": 141000, "Ruination Guardian": 143000, "Ruination Phantom": 71000, "Ruination Spectre": 58000, "Rush Phantom": 107000, "Ruyi Staff": 85000, "SOL Vandal": 68000, "Sakura Ares": 106000, "Sakura Vandal": 68000, "Sarmad Phantom": 71000, "Sarmad Vandal": 68000, "Sensation Judge": 52000, "Sensation Odin": 48000, "Sensation Vandal": 68000, "Sentinels of Light Ares": 106000, "Sentinels of Light Odin": 48000, "Sentinels of Light Operator": 136000, "Sentinels of Light Phantom": 77000, "Sentinels of Light Sheriff": 81000, "Sentinels of Light Shorty": 41000, "Sentinels of Light Spectre": 65000, "Sentinels of Light Vandal": 125000, "Silvanus Phantom": 71000, "Singularity Ares": 176000, "Singularity Butterfly Knife": 138000, "Singularity Ghost": 88000, "Singularity Knife": 174000, "Singularity Phantom": 106000, "Singularity Sheriff": 135000, "Singularity Spectre": 70000, "Singularity Vandal": 124000, "Smite Classic": 75000, "Smite Knife": 138000, "Smite Odin": 48000, "Smite Phantom": 71000, "Snowfall Wand": 138000, "Sol Phantom": 71000, "Sol Sheriff": 81000, "Sol Vandal": 88000, "Solarstride Guardian": 70000, "Solarstride Vandal": 85000, "Soulstrife Ghost": 66000, "Soulstrife Guardian": 70000, "Soulstrife Phantom": 71000, "Soulstrife Scythe": 138000, "Soulstrife Spectre": 58000, "Sovereign Frenzy": 78000, "Sovereign Ghost": 88000, "Sovereign Guardian": 70000, "Sovereign Judge": 52000, "Sovereign Marshal": 58000, "Sovereign Odin": 57000, "Sovereign Phantom": 71000, "Sovereign Stinger": 204000, "Sovereign Sword": 138000, "Spectrum Bulldog": 83000, "Spectrum Classic": 117000, "Spectrum Guardian": 201000, "Spectrum Phantom": 108000, "SplashX Gloves": 45000, "SplashX Operator": 42000, "SplashX Vandal": 79000, "Spline Dagger": 138000, "Spline Operator": 42000, "Spline Phantom": 71000, "Spline Spectre": 58000, "Storm Maw Axe": 138000, "Switchback Classic": 75000, "Team Ace Operator": 61000, "Team Ace Vandal": 68000, "Terminus A Quo": 30000, "Tethered Realms Ghost": 68000, "Tethered Realms Operator": 52000, "Tethered Realms Vandal": 68000, "Titanmail Mace": 30000, "Titanmail Vandal": 68000, "Undercity Phantom": 71000, "VALORANT GO! Vol. 1 Knife": 138000, "VALORANT GO! Vol. 1 Spectre": 58000, "VCT 2025 Karambit": 138000, "VCT 2026 Sigil": 149000, "VCT LOCK//IN Misericórdia": 147000, "VCT x DRX Classic": 75000, "VCT x LEV Classic": 75000, "VCT x PRX Classic": 103000, "VCT x SEN Classic": 75000, "VCT25 x BOOM Classic": 75000, "VCT25 x FNC Classic": 75000, "VCT25 x G2 Classic": 75000, "VCT25 x PRX Classic": 75000, "VCT25 x RRQ Classic": 75000, "VCT25 x SEN Classic": 75000, "VCT25 x T1 Classic": 75000, "VCT26 x PRX Classic": 172000, "VCT26 x RRQ Classic": 75000, "Valiant Hero Ares": 138000, "Valiant Hero Ghost": 116000, "Valiant Hero Operator": 51000, "Valiant Hero Vandal": 120000, "Valorant Go Kunai": 138000, "Wasteland Marshal": 32000, "Wasteland Sheriff": 81000, "Wasteland Spectre": 58000, "Wasteland Vandal": 68000, "Waveform": 86000, "Winterwunderland Candy Cane": 49000, "Winterwunderland Ghost": 66000, "Winterwunderland Phantom": 71000, "Winterwunderland Vandal": 101000, "Wonderstallion Hammer": 138000, "XEROFANG Vandal": 68000, "XERØFANG Ghost": 104000, "XERØFANG Knife": 138000, "XERØFANG Vandal": 110000, "XenoHunter Knife": 138000, "Xenohunter Knife": 138000, "Xenohunter Odin": 48000, "Xenohunter Phantom": 71000, "XeroFang Vandal": 68000, "Xerofang Ghost": 66000, "Xerofang Knife": 138000, "Xerofang Vandal": 68000, "Yoru's Stylish Butterfly Comb": 138000, "Yoru’s Stylish Butterfly Comb": 138000}};   // model bawaan (cadangan)
+let M = MODEL;              // model aktif — bisa diganti dari Admin tanpa deploy
+const ADMIN_PIN = "2026";   // samakan dengan netlify/functions/settings.mjs
+const API_URL = "/api/settings";
+const VAPI = "https://valorant-api.com/v1";
+const LS_SETTINGS = "jubel_settings_cache_v1", LS_CANON = "jubel_canon_v1", LS_SESSION_ALIAS = "jubel_session_alias_v1";
 
-var TIERS = ["Ultra","Exclusive","Premium","Deluxe","Select"];
-var DEFAULT_ON = {Ultra:true, Exclusive:true, Premium:true, Deluxe:false, Select:false};
+/* ---------- utils ---------- */
+const rupiah=n=>'Rp'+Math.round(n).toLocaleString('id-ID');
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const ZW=/[\u2060\u200b\u200c\u200d\ufeff\u00a0]/g;
+function deburr(s){return s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/ø/gi,'o');}
+function norm(s){return deburr(String(s).replace(ZW,' ')).toLowerCase().replace(/['`’.,/]/g,'').replace(/\s+/g,' ').trim();}
+let toastT;function toast(m,bad){const t=document.getElementById('toast');t.textContent=m;t.className='toast on'+(bad?' bad':'');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('on'),2800);}
+const fmtD=iso=>{if(!iso)return '—';const d=new Date(iso);return d.toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'});};
+const fmtDT=iso=>{const d=new Date(iso);return d.toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'2-digit'})+' '+d.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});};
+const daysLeft=iso=>Math.ceil((new Date(iso)-Date.now())/864e5);
+const uid=()=>Math.random().toString(36).slice(2,9);
 
-// Urutan tampil di caption: dari Classic sampai Odin, melee paling belakang.
-var WEAPONS = ["Classic","Shorty","Frenzy","Ghost","Sheriff","Stinger","Spectre","Bucky","Judge",
-  "Bulldog","Guardian","Vandal","Phantom","Marshal","Outlaw","Operator","Ares","Odin"];
-var MELEE_RANK = 99;
-var MELEE = ["Knife","Blade","Blades","Karambit","Axe","Dagger","Sword","Balisong","Katana","Fan",
-  "Hammer","Bat","Claws","Wand","Scythe","Gauntlet","Glove","Chakram","Pickaxe","Spear","Whip",
-  "Baton","Cleaver","Machete","Trident","Sickle","Bow","Staff","Fist","Fists","Ring","Puppet"];
-var CUT_WORDS = WEAPONS.concat(MELEE);
+/* ---------- weapons / classify ---------- */
+const GUNS=['Vandal','Phantom','Bulldog','Guardian','Operator','Marshal','Outlaw','Classic','Shorty','Frenzy','Ghost','Sheriff','Stinger','Spectre','Bucky','Judge','Ares','Odin'];
+const GUNL=GUNS.map(g=>g.toLowerCase());
+const MELEE_KW=['karambit','blade','dagger','knife','butterfly','comb','fan','axe','tomahawk','kunai','sword','katana','claw','wand','bat','saw','scythe','hammer','melee','fingers','flag','baton','nunchaku','spear','glaive','machete','gully','headhunter','balisong','kris','tanto','knives','blades','daggers','misericordia','fist','drill','harvester','spellcaster','primordia','luxe','prosperity'];
+function classify(name){const t=name.trim().split(/\s+/);if(t.length){const l=t[t.length-1].toLowerCase();const i=GUNL.indexOf(l);if(i>=0)return GUNS[i];}const lo=deburr(name).toLowerCase();for(const kw of MELEE_KW)if(lo.includes(kw))return 'Melee';return 'Other';}
+function detectWeapon(name){const t=norm(name).split(' ');if(!t.length)return null;const last=t[t.length-1];let best=null,bs=0;GUNL.forEach((g,i)=>{const s=strSim(last,g);if(s>bs){bs=s;best=GUNS[i];}});if(bs>=0.8)return best;const lo=deburr(name).toLowerCase();for(const kw of MELEE_KW)if(lo.includes(kw))return 'Melee';return null;}
+function parseSkins(text){const lines=text.replace(ZW,'').split('\n');let bp=false;const num=[];for(const raw of lines){const l=raw.trim();if(/^bp\s*:/i.test(l)){bp=true;continue;}if(bp)continue;const m=l.match(/^\d+\.\s*(.+)$/);if(m){const n=m[1].trim();if(n&&!/[🤖🟣🟢🔵⚪🔴]/.test(n))num.push(n);}}if(num.length)return num;const out=[];bp=false;for(const raw of lines){const l=raw.trim();if(/^bp\s*:/i.test(l))bp=true;if(bp||!l||l==='-'||/^skins?\s*:/i.test(l)||/[🤖🟣🟢🔵⚪🔴]/.test(l)||/^(rank|agent|region|change name)\s*:/i.test(l)||l.startsWith('-'))continue;out.push(l);}return out;}
 
-// Kamus bawaan. Kunci dinormalkan lewat canonKey(), jadi variasi penulisan
-// nama act di file export tetap kebaca.
-var BP_SEED = {
-  "IGNITION 1": "Kingdom",
-  "IGNITION 2": "Hivemind",
-  "IGNITION 3": "Ruin",
-  "FORMATION 1": "Outpost",
-  "FORMATION 2": "Prism III",
-  "FORMATION 3": "Songsteel",
-  "REFLECTION 1": "K/TAC",
-  "REFLECTION 2": "Artisan",
-  "REFLECTION 3": "Genesis",
-  "DISRUPTION 1": "Velocity",
-  "DISRUPTION 2": "Striker",
-  "DISRUPTION 3": ".SYS",
-  "DIMENSION 1": "Task Force 809",
-  "DIMENSION 2": "Obsidiana",
-  "DIMENSION 3": "Iridian Thorn",
-  "REVELATION 1": "Venturi",
-  "REVELATION 2": "Tilde",
-  "REVELATION 3": "Bound",
-  "EVOLUTION 1": "Composite",
-  "EVOLUTION 2": "Transition",
-  "EVOLUTION 3": "Sandswept",
-  "DEFIANCE 1": "Guardrail",
-  "DEFIANCE 2": "Shellspire",
-  "DEFIANCE 3": "Comet",
-  "COLLISION 1": "Bubble Pop",
-  "COLLISION 2": "Overlay",
-  "COLLISION 3": "Torque",
-  "S2025 1": "Hieroscape",
-  "S2025 2": "Byteshift",
-  "S2025 3": "Solarex",
-  "S2025 4": "ATLAS // CMD",
-  "S2025 5": "Interhelm",
-  "S2025 6": "Heartstopper",
-  "S2026 1": "Montage",
-  "S2026 2": "Paceline",
-  "S2026 3": "Keys to Elysium",
-  "S2026 4": "Sky Reaper",
-  "S2026 5": "Verdant Cafe"
-};
+/* ---------- fuzzy matching (NLP sederhana) ---------- */
+function damerau(a,b){const m=a.length,n=b.length;if(!m)return n;if(!n)return m;const d=[];for(let i=0;i<=m;i++){d[i]=new Array(n+1);d[i][0]=i;}for(let j=0;j<=n;j++)d[0][j]=j;for(let i=1;i<=m;i++)for(let j=1;j<=n;j++){const c=a[i-1]===b[j-1]?0:1;d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+c);if(i>1&&j>1&&a[i-1]===b[j-2]&&a[i-2]===b[j-1])d[i][j]=Math.min(d[i][j],d[i-2][j-2]+1);}return d[m][n];}
+function strSim(a,b){const L=Math.max(a.length,b.length);return L?1-damerau(a,b)/L:1;}
+function tokSim(a,b){const A=a.split(' ').filter(Boolean),B=b.split(' ').filter(Boolean);if(!A.length||!B.length)return 0;let matched=0;const used=new Set();for(const t of A){let bi=-1,bs=0;B.forEach((u,i)=>{if(used.has(i))return;const s=strSim(t,u);if(s>bs){bs=s;bi=i;}});if(bi>=0&&bs>=0.8){matched++;used.add(bi);}}return matched/Math.max(A.length,B.length);}
+function tokContain(a,b){const A=a.split(' ').filter(Boolean),B=b.split(' ').filter(Boolean);if(A.length<2||!B.length)return 0;let m=0;const used=new Set();for(const t of A){let bi=-1,bs=0;B.forEach((u,i)=>{if(used.has(i))return;const s=strSim(t,u);if(s>bs){bs=s;bi=i;}});if(bi>=0&&bs>=0.8){m++;used.add(bi);}}return m/A.length;}
+function score(a,b){return 0.45*strSim(a,b)+0.30*tokSim(a,b)+0.25*tokContain(a,b);}
 
-var EPISODES = ["IGNITION","FORMATION","REFLECTION","DISRUPTION","DIMENSION",
-                "REVELATION","EVOLUTION","DEFIANCE","COLLISION"];
-var ROMAN = {I:1, II:2, III:3, IV:4, V:5, VI:6, VII:7, VIII:8, IX:9, X:10};
-
-// Ubah nama act apa pun jadi kunci kamus, mis. "REFLECTION: ACT 1" -> "REFLECTION 1",
-// "V25 Act 4" / "Season 2025: Act 4" -> "S2025 4".
-function canonKey(act){
-  var s = String(act).toUpperCase().replace(/[^A-Z0-9]+/g, " ").trim();
-  var m = s.match(/ACT\s+([0-9]+|[IVX]+)/);
-  if(!m) return s;
-  var n = /^[0-9]+$/.test(m[1]) ? parseInt(m[1], 10) : ROMAN[m[1]];
-  if(!n) return s;
-
-  var era = null;
-  for(var i = 0; i < EPISODES.length; i++){
-    if(s.indexOf(EPISODES[i]) >= 0){ era = EPISODES[i]; break; }
-  }
-  if(!era){
-    var ep = s.match(/EPISODE\s+([0-9]+|[IVX]+)/);
-    if(ep){
-      var en = /^[0-9]+$/.test(ep[1]) ? parseInt(ep[1], 10) : ROMAN[ep[1]];
-      if(en && EPISODES[en - 1]) era = EPISODES[en - 1];
-    }
-  }
-  if(!era){
-    var head = s.slice(0, s.indexOf(m[0]));
-    var y = head.match(/20(2[5-9]|3[0-9])(?![0-9])/) || head.match(/(2[5-9]|3[0-9])(?![0-9])/);
-    if(y) era = "S20" + y[1];
-  }
-  return era ? era + " " + n : s;
+/* ---------- settings (lapisan di atas model) ---------- */
+function defaultSettings(){return {version:1,updated_at:null,model_version:M.model_version,
+  knobs:{buy_factor:M.buy_factor,buy_max:+(M.buy_factor+M.buy_spread).toFixed(2),sell_factor:M.sell_factor,sell_top:+(M.sell_factor+0.08).toFixed(2),sell_bottom:+(M.sell_factor-0.09).toFixed(2),rounding:'kagok',market:1.0,hv_strength:M.highvalue_premium.strength,premier_lo:M.premier_penalty_lo,premier_hi:M.premier_penalty_hi,hype_step:M.hype.step,hype_days:M.hype.default_days,bare_buy_lo:20000,bare_buy_hi:25000,bare_sell:75000},
+  hv_points:JSON.parse(JSON.stringify(M.highvalue_premium.points)),tier_mult:Object.assign({},M.tier_mult),concentration:M.concentration.slice(),
+  overrides:[],skin_edits:{},aliases:{},audit:[],seen_skins:[],dismissed_new:[],last_sync:null,model:null,
+  sources:[{name:'TOKVAL',tawar:0,maks:0},{name:'VALJUBEL',tawar:0,maks:0},{name:'Facebook',tawar:10,maks:25},{name:'Lainnya',tawar:0,maks:0}]};}
+let S=defaultSettings(), S_prev=JSON.parse(JSON.stringify(S)), dirty=false, source='default';
+function mergeDefaults(x){const d=defaultSettings();if(!x||typeof x!=='object')return d;const o=Object.assign({},d,x);o.knobs=Object.assign({},d.knobs,x.knobs||{});o.tier_mult=Object.assign({},d.tier_mult,x.tier_mult||{});['overrides','audit','seen_skins','dismissed_new','concentration','hv_points','sources'].forEach(k=>{if(!Array.isArray(o[k]))o[k]=d[k];});['skin_edits','aliases'].forEach(k=>{if(!o[k]||typeof o[k]!=='object')o[k]=d[k];});if(o.model&&!validModel(o.model))o.model=null;return o;}
+async function loadSettings(){
+  try{const r=await fetch(API_URL,{cache:'no-store'});if(r.ok){const j=await r.json();if(j){S=mergeDefaults(j);source='server';localStorage.setItem(LS_SETTINGS,JSON.stringify(S));}else{source='server-empty';}}else throw 0;}
+  catch(e){try{const c=localStorage.getItem(LS_SETTINGS);if(c){S=mergeDefaults(JSON.parse(c));source='cache';}}catch(_){}}
+  S_prev=JSON.parse(JSON.stringify(S));dirty=false;applyModel();
 }
+function validModel(m){return m&&typeof m==='object'&&m.skins&&typeof m.skins==='object'&&Object.keys(m.skins).length>50&&typeof m.base_value==='number'&&m.weapon_class&&m.rank_adj&&m.concentration&&m.highvalue_premium;}
+function applyModel(){M=(S.model&&validModel(S.model))?S.model:MODEL;updateInfo();}
+function updateInfo(){const el=document.getElementById('settingsInfo');if(el)el.textContent='setelan: '+source+' · model '+M.model_version+((S.model&&validModel(S.model))?' (Blobs)':' (bawaan)');}
+function markDirty(){dirty=true;renderSaveStatus();}
+function renderSaveStatus(){const el=document.getElementById('saveStatus');if(!el)return;el.innerHTML=(dirty?'<span class="dirty">● ada perubahan belum disimpan</span>':'✓ tersimpan')+' · model <b>'+M.model_version+'</b> ('+((S.model&&validModel(S.model))?'dari Blobs':'bawaan')+', '+Object.keys(M.skins).length+' skin) · sumber setelan: '+source+(S.updated_at?' · update terakhir '+fmtDT(S.updated_at):'');}
+function diffAudit(prev,cur){const out=[];const ts=new Date().toISOString();const add=(item,from,to)=>out.push({ts,item,from:String(from),to:String(to)});
+  const pv=(prev.model&&prev.model.model_version)||'bawaan '+MODEL.model_version,cv=(cur.model&&cur.model.model_version)||'bawaan '+MODEL.model_version;if(pv!==cv||JSON.stringify(prev.model||null)!==JSON.stringify(cur.model||null))add('Model dasar (bobot semua skin)',pv,cv);
+  for(const k in cur.knobs)if(String(prev.knobs[k])!==String(cur.knobs[k]))add('Setelan · '+k,prev.knobs[k],cur.knobs[k]);
+  if(JSON.stringify(prev.hv_points)!==JSON.stringify(cur.hv_points))add('Kurva sultan',JSON.stringify(prev.hv_points),JSON.stringify(cur.hv_points));
+  for(const k in cur.tier_mult)if(String(prev.tier_mult[k])!==String(cur.tier_mult[k]))add('Tier · '+k,prev.tier_mult[k],cur.tier_mult[k]);
+  if(JSON.stringify(prev.concentration)!==JSON.stringify(cur.concentration))add('Kurva konsentrasi',prev.concentration.join(','),cur.concentration.join(','));
+  const pm=Object.fromEntries(prev.overrides.map(o=>[o.id,o])),cm=Object.fromEntries(cur.overrides.map(o=>[o.id,o]));
+  for(const id in cm){const c=cm[id],p=pm[id];const desc=o=>o.type==='hype'?('hype '+o.score+'/10'):('Rp'+o.value);if(!p)add('Override · '+c.skin,'(tidak ada)',desc(c)+' s/d '+fmtD(c.expires_at));else if(desc(p)!==desc(c)||p.expires_at!==c.expires_at)add('Override · '+c.skin,desc(p)+' s/d '+fmtD(p.expires_at),desc(c)+' s/d '+fmtD(c.expires_at));}
+  for(const id in pm)if(!cm[id])add('Override · '+pm[id].skin,(pm[id].type==='hype'?'hype '+pm[id].score+'/10':'Rp'+pm[id].value),'(dihapus)');
+  const keys=new Set([...Object.keys(prev.skin_edits),...Object.keys(cur.skin_edits)]);for(const k of keys){const a=prev.skin_edits[k],b=cur.skin_edits[k];if(a!==b)add('Bobot · '+k,a==null?('model: Rp'+(M.skins[k]??'-')):'Rp'+a,b==null?('kembali ke model Rp'+(M.skins[k]??'-')):'Rp'+b);}
+  if(JSON.stringify(prev.sources||[])!==JSON.stringify(cur.sources||[]))add('Sumber akun (+% beli)',(prev.sources||[]).map(s=>s.name+' '+(s.tawar||0)+'/'+(s.maks||0)).join(', '),(cur.sources||[]).map(s=>s.name+' '+(s.tawar||0)+'/'+(s.maks||0)).join(', '));
+  const ak=new Set([...Object.keys(prev.aliases),...Object.keys(cur.aliases)]);for(const k of ak){const a=prev.aliases[k],b=cur.aliases[k];if(a!==b)add('Alias · "'+k+'"',a??'(tidak ada)',b??'(dihapus)');}
+  return out;}
+async function saveSettings(){
+  const entries=diffAudit(S_prev,S);S.audit=[...entries,...(S.audit||[])].slice(0,300);S.model_version=M.model_version;
+  const pin=sessionStorage.getItem('jubel_pin')||'';
+  try{const r=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin,settings:S})});const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.error||('HTTP '+r.status));S.updated_at=j.updated_at||new Date().toISOString();source='server';toast('Tersimpan global ('+entries.length+' perubahan)');}
+  catch(e){S.updated_at=new Date().toISOString();source='cache (server tidak tersedia)';toast('Server tidak tersedia — tersimpan lokal saja. '+(e.message||''),true);}
+  localStorage.setItem(LS_SETTINGS,JSON.stringify(S));S_prev=JSON.parse(JSON.stringify(S));dirty=false;updateInfo();renderAdmin();buildIndex();fillSources();calc();
+}
+function exportSettings(){
+  const eff={};const names=new Set([...Object.keys(M.skins),...Object.keys(S.skin_edits||{}),...(S.overrides||[]).map(o=>o.skin)]);
+  names.forEach(n=>{const inf=INDEX[norm(n)]||{name:n,weapon:classify(n),tier:null};const e=effective(inf);eff[n]={weapon:inf.weapon,base_model:M.skins[n]??null,edit_admin:S.skin_edits[n]??null,override:e.ov?(e.ov.type==='hype'?('hype '+e.ov.score+'/10'+(e.ov.expired?' (kadaluarsa)':'')):('manual Rp'+e.ov.value)):null,effective:e.value};});
+  const out={format:'jubel-weights',format_version:1,exported_at:new Date().toISOString(),model_version:M.model_version,model_source:(S.model&&validModel(S.model))?'blobs':'bawaan',
+    model:M,settings:Object.assign({},S,{model:undefined,audit:undefined}),audit:S.audit||[],effective:eff};
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(out,null,2)],{type:'application/json'}));a.download='jubel-bobot-'+M.model_version+'-'+new Date().toISOString().slice(0,10)+'.json';a.click();toast('Bobot lengkap diunduh ('+Object.keys(M.skins).length+' skin)');}
+function resetModel(){if(!S.model)return toast('Sudah memakai model bawaan');if(!confirm('Kembali ke model bawaan '+MODEL.model_version+'? Override/alias/setelan tidak berubah.'))return;S.model=null;applyModel();markDirty();buildIndex();renderAdmin();calc();toast('Model bawaan aktif — klik Simpan untuk terapkan global');}
+function importSettings(ev){const f=ev.target.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{try{const j=JSON.parse(rd.result);let msg='';
+    if(j&&j.format==='jubel-weights'){ if(!validModel(j.model))throw new Error('model tidak valid'); const keepAudit=S.audit||[]; S=mergeDefaults(Object.assign({},j.settings||{},{model:j.model,audit:keepAudit})); msg='Bobot lengkap dimuat: model '+j.model.model_version+' ('+Object.keys(j.model.skins).length+' skin)'; }
+    else if(j&&validModel(j)){ S.model=j; msg='Model dasar dimuat: '+(j.model_version||'?')+' ('+Object.keys(j.skins).length+' skin)'; }
+    else if(j&&typeof j==='object'&&(j.knobs||j.overrides)){ const keepModel=S.model; S=mergeDefaults(Object.assign({},j,{model:j.model||keepModel})); msg='Setelan dimuat'; }
+    else throw new Error('format tidak dikenal');
+    applyModel();markDirty();buildIndex();renderAdmin();calc();toast(msg+' — klik Simpan untuk terapkan global');}catch(e){toast('File tidak valid: '+e.message,true);}ev.target.value='';};rd.readAsText(f);}
 
-var DEFAULT_TPL = {
-A:
-"🦹\u200d♂️ VALJUBEL READY 🦹\u200d♂️\n" +
-"({kode})\n" +
-"\n" +
-"🛒 https://valjubel.com > 🔖 DISC 10%\n" +
-"🎟️ Voucher: VALFORUM10\n" +
-"\n" +
-"⏰ 24 Jam | ⚡️ Instan | 🛡️ GARANSI\n" +
-"\n" +
-"🔮 Price: RP. {harga}\n" +
-"\n" +
-"Skins:\n" +
-"{bundle}\n" +
-"Skins:\n" +
-"{skins}\n" +
-"-\n" +
-"BP:\n" +
-"{bp}\n" +
-"-\n" +
-".\n" +
-"🟣Rank:{rank}\n" +
-"🟣Level:{level}\n" +
-"🟣Agent:{agent}\n" +
-"🟣Change Name:{changename}\n" +
-"🟣Region:{region}\n" +
-"🟣MFA:{mfa}\n" +
-"\n" +
-"🛒 ORDER VIA WEBSITE & DAPATKAN DISKON 10%!\n" +
-"🌐 https://valjubel.com/\n" +
-"🎟️ Voucher : VALFORUM10\n" +
-"\n" +
-"💬 Official WA (Tanya-tanya & Bantuan):\n" +
-"📞 0889-1234-599\n" +
-"\n" +
-"Semua Kebutuhan Valorant Cek\n" +
-"🔗 https://valforum.carrd.co/",
-B:
-"🔥 TOKOVALO READY 🔥\n" +
-"Kode Akun ({kode})\n" +
-"Price : Rp {harga}\n" +
-"{bundle}\n" +
-"Skins:\n" +
-"{skins}\n" +
-"BP:\n" +
-"{bp}\n" +
-".\n" +
-"Rank:{rank}\n" +
-"Level:{level}\n" +
-"Agent:{agent}\n" +
-"Change Name:{changename}\n" +
-"Region:{region}\n" +
-"MFA:{mfa}\n" +
-".\n" +
-"🔵 CATALOG LENGKAP DAN PEMBELIAN AKUN:\n" +
-"🌐 www.tokovalorant.com/jual-beli-akun\n" +
-"💬 Official WA (Tanya-tanya & Bantuan):\n" +
-"📞 https://wa.me/62816604300"
-};
-
-var PLACEHOLDERS = [
-  ["{kode}","kode akun toko ini"],
-  ["{harga}","harga toko ini, sudah pakai titik"],
-  ["{bundle}","baris bundle + isinya, bernomor"],
-  ["{skins}","daftar skin bernomor"],
-  ["{bp}","daftar battle pass bernomor"],
-  ["{rank}","rank"],
-  ["{level}","level"],
-  ["{agent}","baris agent toko ini"],
-  ["{changename}","status change name"],
-  ["{region}","region"],
-  ["{mfa}","status MFA"]
-];
-
-var $ = function(id){ return document.getElementById(id); };
-var allSkins = [], selected = [], tierFilter = {}, ownedAgents = null;
-var selectionTouched = false;
-var bpActs = [];        // act names from the file, in order
-var bpDict = {};        // hasil gabungan: seed < contract < isian manual
-var bpUser = {};        // isian manual, ini yang disimpan & disinkronkan
-var bpContract = {};    // hasil baca /v1/contracts
-var families = {};      // family name -> count, from inventory
-var activeStore = "A", tplStore = "A";
-TIERS.forEach(function(t){ tierFilter[t] = true; });
-
-/* ---------- storage ----------
-   Pakai localStorage kalau tersedia (kasus normal di browser / Netlify),
-   kalau tidak jatuh ke window.storage. Semua dibungkus try/catch supaya
-   halaman tetap jalan walau penyimpanan diblokir. */
-var hasLS = (function(){
-  try{ localStorage.setItem("__t","1"); localStorage.removeItem("__t"); return true; }
-  catch(e){ return false; }
-})();
-function save(key, val){
+/* ---------- canonical list (valorant-api) ---------- */
+let CANON={};   // normName -> {name, weapon, tier}
+let INDEX={};   // normName -> {name, weapon, tier, inModel}
+async function syncCanonical(force){
+  try{const c=JSON.parse(localStorage.getItem(LS_CANON)||'null');if(c&&!force&&Date.now()-c.at<7*864e5){CANON=c.map;buildIndex();return;}}catch(_){}
   try{
-    if(hasLS) localStorage.setItem(key, JSON.stringify(val));
-    else if(window.storage) window.storage.set(key, JSON.stringify(val));
-  }catch(e){}
+    const [tr,sr]=await Promise.all([fetch(VAPI+'/contenttiers'),fetch(VAPI+'/weapons/skins')]);
+    const tiers=(await tr.json()).data,skins=(await sr.json()).data;const tmap={};tiers.forEach(t=>tmap[t.uuid]=t.devName);
+    const map={};skins.forEach(s=>{const name=String(s.displayName||'').replace(/\s+/g,' ').trim();if(!name||/^(standard|random favorite skin)/i.test(name))return;const tier=tmap[s.contentTierUuid]||null;if(!tier)return;map[norm(name)]={name,weapon:classify(name),tier};});
+    CANON=map;localStorage.setItem(LS_CANON,JSON.stringify({at:Date.now(),map}));
+    // new-skin detection
+    const all=Object.values(map).map(x=>x.name);
+    if(!S.seen_skins||!S.seen_skins.length){S.seen_skins=all;S.last_sync=new Date().toISOString();}
+    else{const seen=new Set(S.seen_skins);const fresh=all.filter(n=>!seen.has(n)&&M.skins[n]==null);S.new_skins=fresh;S.last_sync=new Date().toISOString();}
+    buildIndex();if(force){toast('Sync OK: '+all.length+' skin resmi');renderAdmin();}
+  }catch(e){buildIndex();if(force)toast('Sync gagal (offline / API tidak bisa diakses)',true);}
 }
-function load(key, cb){
-  try{
-    if(hasLS){
-      var v = localStorage.getItem(key);
-      if(v) cb(JSON.parse(v));
-      return;
-    }
-    if(!window.storage) return;
-    window.storage.get(key).then(function(r){
-      if(r && r.value) cb(JSON.parse(r.value));
-    }).catch(function(){});
-  }catch(e){}
+function buildIndex(){INDEX={};for(const [k,v] of Object.entries(CANON))INDEX[k]={name:v.name,weapon:v.weapon,tier:v.tier,inModel:M.skins[v.name]!=null};for(const n in M.skins){const k=norm(n);if(!INDEX[k])INDEX[k]={name:n,weapon:classify(n),tier:null,inModel:true};else INDEX[k].inModel=true;}for(const n in S.skin_edits){const k=norm(n);if(!INDEX[k])INDEX[k]={name:n,weapon:classify(n),tier:null,inModel:false};}}
+
+/* ---------- valuation ---------- */
+function baseValue(info){const n=info.name;if(S.skin_edits[n]!=null)return {v:S.skin_edits[n],src:'edit'};if(M.skins[n]!=null)return {v:M.skins[n],src:'model'};const wc=M.weapon_class[info.weapon]||M.weapon_class.Other;if(info.tier&&S.tier_mult[info.tier]!=null)return {v:Math.round(wc*S.tier_mult[info.tier]),src:'tier'};return {v:wc,src:'weapon'};}
+function overrideFor(name){const o=(S.overrides||[]).find(o=>o.skin===name);if(!o)return null;const exp=o.expires_at&&new Date(o.expires_at)<new Date();return Object.assign({},o,{expired:!!exp});}
+function effective(info){const b=baseValue(info);const o=overrideFor(info.name);if(!o||o.expired)return {value:b.v,base:b.v,src:b.src,ov:null};if(o.type==='value')return {value:o.value,base:b.v,src:b.src,ov:o,mult:o.value/b.v};const mult=1+o.score*(S.knobs.hype_step||0);return {value:Math.round(b.v*mult),base:b.v,src:b.src,ov:o,mult};}
+let sessionAliases={};try{sessionAliases=JSON.parse(localStorage.getItem(LS_SESSION_ALIAS)||'{}');}catch(_){}
+function resolveSkin(raw){
+  const n=norm(raw);if(!n)return null;
+  if(INDEX[n])return {info:INDEX[n],method:'exact',conf:1,raw};
+  const al=S.aliases[n]||sessionAliases[n];if(al&&INDEX[norm(al)])return {info:INDEX[norm(al)],method:'alias',conf:1,raw};
+  const w=detectWeapon(raw);let best=null,bs=0;
+  for(const k in INDEX){const inf=INDEX[k];if(w&&inf.weapon!==w)continue;const s=score(n,k);if(s>bs){bs=s;best=inf;}}
+  if(best&&bs>=0.88)return {info:best,method:'fuzzy',conf:bs,raw};
+  const fb={name:raw,weapon:w||classify(raw),tier:null};
+  if(best&&bs>=0.62)return {info:fb,method:'confirm',conf:bs,raw,candidate:best};
+  return {info:fb,method:'unknown',conf:0,raw};
 }
+function hvMult(mv){const pts=S.hv_points;if(!pts||!pts.length)return 1;let m;if(mv<=pts[0][0])return 1;if(mv>=pts[pts.length-1][0])m=pts[pts.length-1][1];else{m=1;for(let i=0;i<pts.length-1;i++){const [x0,y0]=pts[i],[x1,y1]=pts[i+1];if(mv>=x0&&mv<x1){m=y0+(y1-y0)*(mv-x0)/(x1-x0);break;}}}return 1+(m-1)*(S.knobs.hv_strength??1);}
+let premierStuck=0, acctType='skin';
+function rnd(n){const mode=(S.knobs.rounding||'kagok');let v=Math.round(n/1000)*1000;if(mode==='ribuan'||v<10000)return v;const d=Math.floor(v/1000)%10;if(d===0)v-=2000;else if(d===9)v-=1000;return v;}   // kagok: hindari ...0.000 (bulat) & ...9.000 (charm)
+function copyVal(el){const txt=el.textContent.replace(/[^0-9]/g,'');if(!txt)return;navigator.clipboard&&navigator.clipboard.writeText(txt).then(()=>toast('Disalin: '+el.textContent)).catch(()=>{});}
 
-/* ---------- file ---------- */
-var drop = $("drop"), fileInput = $("file");
-drop.addEventListener("click", function(){ fileInput.click(); });
-drop.addEventListener("dragover", function(e){ e.preventDefault(); drop.classList.add("over"); });
-drop.addEventListener("dragleave", function(){ drop.classList.remove("over"); });
-drop.addEventListener("drop", function(e){
-  e.preventDefault(); drop.classList.remove("over");
-  if(e.dataTransfer.files.length) read(e.dataTransfer.files[0]);
-});
-fileInput.addEventListener("change", function(e){ if(e.target.files.length) read(e.target.files[0]); });
-function showErr(m){ var el = $("err"); el.textContent = m; el.style.display = m ? "block" : "none"; }
-
-function read(file){
-  showErr("");
-  var fr = new FileReader();
-  fr.onload = function(){
-    var data;
-    try{ data = JSON.parse(String(fr.result).trim()); }
-    catch(err){ showErr("File ini bukan JSON export Explorant. Unduh ulang lewat tombol Export di halaman akun."); return; }
-    var d = data.data || data;
-    if(!d || !d.inventory){ showErr("Struktur file tidak dikenali — tidak ada bagian inventory di dalamnya."); return; }
-    apply(d, file.name);
-  };
-  fr.onerror = function(){ showErr("File gagal dibaca. Coba unduh ulang."); };
-  fr.readAsText(file);
+function calc(){
+  const text=document.getElementById('skins').value;const skins=parseSkins(text);
+  const L=document.getElementById('ledger'),W=document.getElementById('warnBox');
+  const clear=()=>{['mvVal','buyOffer','buyMax','sellTop','sellReco','sellBottom','profitVal'].forEach(id=>document.getElementById(id).textContent='—');document.getElementById('hvBadge').style.display='none';};
+  if(acctType==='bare'){renderBare();return;}
+  if(!skins.length){
+    L.innerHTML='<div class="cempty">Tempel daftar skin untuk mulai menghitung.</div>';
+    W.innerHTML=text.trim()?'<div class="warn">Tidak ada skin terdeteksi dari teks itu. Kalau akunnya memang <b>polosan</b>, pilih <b>Jenis Akun → Polosan</b> di atas. Kalau ada skin, cek formatnya (satu skin per baris, boleh bernomor).</div>':'';
+    clear();return;}
+  const items=skins.map(s=>{const r=resolveSkin(s);const e=effective(r.info);return Object.assign({},r,{base:e.value,valBase:e.base,src:e.src,ov:e.ov,mult:e.mult,weapon:r.info.weapon});});
+  const byW={};items.forEach((it,i)=>{(byW[it.weapon]=byW[it.weapon]||[]).push(i);});const curve=S.concentration;
+  for(const w in byW){const idxs=byW[w].sort((a,b)=>items[b].base-items[a].base);idxs.forEach((idx,r)=>{const m=curve[Math.min(r,curve.length-1)];items[idx].cmult=m;items[idx].rank=r;items[idx].value=Math.round(items[idx].base*m);});}
+  const skinSum=items.reduce((a,it)=>a+it.value,0);const K=S.knobs;const rankKey=document.getElementById('rank').value;const rankAdj=M.rank_adj[rankKey]||0;
+  let mv=(M.base_value+skinSum+rankAdj)*(K.market||1);let pen=0;if(premierStuck){pen=(K.premier_lo+K.premier_hi)/2;mv-=pen;}if(mv<0)mv=0;
+  const hv=hvMult(mv),sellEff=K.sell_factor*hv;
+  const srcName=document.getElementById('source').value;const src=(S.sources||[]).find(x=>x.name===srcName)||{tawar:0,maks:0};
+  const buyOffer=rnd(mv*K.buy_factor*(1+(src.tawar||0)/100)),buyMax=rnd(mv*K.buy_max*(1+(src.maks||0)/100));
+  const sellTop=rnd(mv*K.sell_top*hv),sellReco=rnd(mv*K.sell_factor*hv),sellBottom=rnd(mv*K.sell_bottom*hv);
+  const profit=sellReco-buyOffer;
+  const hb=document.getElementById('hvBadge');if(hv>1.001){hb.style.display='inline-block';hb.textContent='SULTAN +'+Math.round((hv-1)*100)+'%';}else hb.style.display='none';
+  document.getElementById('mvVal').textContent=rupiah(mv);
+  document.getElementById('buyOffer').textContent=rupiah(buyOffer);document.getElementById('buyMax').textContent=rupiah(buyMax);
+  document.getElementById('sellTop').textContent=rupiah(sellTop);document.getElementById('sellReco').textContent=rupiah(sellReco);document.getElementById('sellBottom').textContent=rupiah(sellBottom);
+  document.getElementById('profitVal').innerHTML=rupiah(profit)+' <small>('+(buyOffer?Math.round(profit/buyOffer*100):0)+'% dari modal)</small>';
+  let html='<div class="lh"><span>Skin terdeteksi ('+items.length+') · nilai jual</span><span>Rp</span></div>';
+  items.forEach((it,i)=>{const tags=['<span class="tag wpn">'+it.weapon+'</span>'];
+    if(it.method==='fuzzy'||it.method==='alias')tags.push('<span class="tag fz" title="dicocokkan dari: '+esc(it.raw)+'">≈ '+(it.method==='alias'?'alias':Math.round(it.conf*100)+'%')+'</span>');
+    if(it.method==='unknown')tags.push('<span class="tag unk">tidak dikenal</span>');
+    if(it.src==='tier'&&it.info.tier)tags.push('<span class="tag est">estimasi · '+it.info.tier+'</span>');else if(it.src==='weapon'&&it.method!=='exact')tags.push('<span class="tag est">estimasi</span>');
+    if(it.ov)tags.push('<span class="tag fire" title="'+esc(it.ov.reason||'')+'">🔥 '+(it.ov.type==='hype'?'hype '+it.ov.score+'/10 ×'+it.mult.toFixed(2):'manual')+'</span>');
+    if(it.rank>0)tags.push('<span class="tag dim">×'+it.cmult+'</span>');
+    let name=esc(it.method==='exact'||it.method==='fuzzy'||it.method==='alias'?it.info.name:it.raw);
+    if(it.method==='confirm')name+=' <span class="tag est">perlu konfirmasi</span>';
+    html+='<div class="li"><div class="nm">'+tags.join('')+'<span class="t">'+name+'</span></div><div class="val">'+rupiah(it.value)+(it.ov?'<small>dasar '+rupiah(it.valBase)+'</small>':'')+'</div></div>';});
+  html+='<div class="li mod"><div class="nm">Nilai dasar akun</div><div class="val">'+rupiah(M.base_value)+'</div></div>';
+  if(rankAdj)html+='<div class="li mod pos"><div class="nm">Rank · '+esc(rankKey)+'</div><div class="val">+'+rupiah(rankAdj)+'</div></div>';
+  if((K.market||1)!==1)html+='<div class="li mod '+(K.market>1?'pos':'neg')+'"><div class="nm">Kondisi pasar ×'+K.market+'</div><div class="val">'+(K.market>1?'+':'−')+rupiah(Math.abs((M.base_value+skinSum+rankAdj)*(K.market-1)))+'</div></div>';
+  if(src.tawar||src.maks)html+='<div class="li mod pos"><div class="nm">Sumber · '+esc(src.name)+' (beli lebih tinggi)</div><div class="val">tawar +'+src.tawar+'% · maks +'+src.maks+'%</div></div>';
+  if(premierStuck)html+='<div class="li mod neg"><div class="nm">Premier stuck</div><div class="val">−'+rupiah(pen)+'</div></div>';
+  html+='<div class="li total"><div class="nm">Nilai Pasar Total</div><div class="val">'+rupiah(mv)+'</div></div>';L.innerHTML=html;
+  window.__items=items;
+  const est=items.filter(i=>i.src==='tier'||i.src==='weapon'),unk=items.filter(i=>i.method==='unknown'),cf=items.filter(i=>i.method==='confirm'),dim=items.filter(i=>i.rank>0),fire=items.filter(i=>i.ov);let w='';
+  if(cf.length)w+='<b>'+cf.length+' nama</b> mirip tapi tidak persis — konfirmasi di bawah ini. ';
+  if(unk.length)w+='<b>'+unk.length+' skin</b> tidak dikenal (dipakai rata-rata senjata). ';
+  if(est.length-unk.length>0)w+='<b>'+(est.length-unk.length)+' skin</b> belum ada di model — dihargai dari tier resminya. ';
+  if(fire.length)w+='<b>'+fire.length+' skin</b> sedang trending (override aktif). ';
+  if(dim.length)w+='<b>'+dim.length+' skin</b> kena diminishing (numpuk di senjata sama). ';
+  let wtop='';
+  if(items.length&&items.every(i=>i.method==='unknown'))wtop='<b>Tidak ada nama skin yang dikenali</b> dari teks itu. Kalau akunnya <b>polosan</b>, pilih <b>Jenis Akun → Polosan</b>. Kalau ada skin, cek ejaan/formatnya — harga di bawah ini belum bisa dipercaya. ';
+  let cfHtml='';cf.forEach(it=>{const i=items.indexOf(it);cfHtml+='<div style="margin-top:6px">"'+esc(it.raw)+'" → <span class="confirm">Maksud kamu <b>'+esc(it.candidate.name)+'</b>? <button onclick="confirmAlias('+i+')">Ya</button></span></div>';});
+  W.innerHTML=(wtop||w||cfHtml)?'<div class="warn">'+wtop+w+cfHtml+'</div>':'';
 }
-
-function apply(d, filename){
-  var acc = d.account || {}, det = d.details || {}, inv = d.inventory || {};
-
-  // Nama dari export kadang punya spasi nyasar di depan/belakang atau spasi ganda
-  // di tengah. Itu merusak urutan senjata dan pencocokan tema, jadi dirapikan dulu.
-  allSkins = (inv.skins || []).map(function(s){
-    return {
-      name: String(s.name || "").trim().replace(/\s+/g, " "),
-      tier: TIERS.indexOf(s.tier) >= 0 ? s.tier : "Select"
-    };
-  }).filter(function(s){ return s.name; });
-  allSkins.sort(function(a,b){
-    var t = TIERS.indexOf(a.tier) - TIERS.indexOf(b.tier);
-    return t !== 0 ? t : a.name.localeCompare(b.name);
-  });
-  bpActs = (inv.battlepasses || []).map(function(b){ return String(b.name || "").trim(); });
-  selectionTouched = false;
-  rebuildBpSkins();
-  applyDefaultSelection();
-
-  buildFamilies();
-
-  $("level").value = det.level || acc.level || "";
-  var ctry = (det.country || acc.region || "").toUpperCase();
-  $("region").value = ctry === "AP" ? "AP" : (ctry || "IDN");
-
-  ownedAgents = (inv.agents || []).length;
-  fillAgents();
-
-  bpMax = {};
-  renderBP();
-
-  buildRankChips(d.competitive_tiers || []);
-  renderTierbar(); renderSkins(); renderPicked();
-
-  var info = $("fileInfo");
-  info.style.display = "block";
-  info.innerHTML = "<b>" + esc(filename) + "</b> — " + esc(acc.nickname || det.nickname || "tanpa nama") +
-    " · level " + (det.level || acc.level || "?") + " · " + allSkins.length + " skin · " + ownedAgents + "+" + (parseInt($("baseAgents").value, 10) || 5) +
-    " = " + agentCount() + " agent";
-  build();
+function renderBare(){
+  const K=S.knobs,lo=K.bare_buy_lo,hi=K.bare_buy_hi,sell=K.bare_sell;
+  document.getElementById('mvVal').textContent=rupiah(sell);
+  document.getElementById('buyOffer').textContent=rupiah(lo);document.getElementById('buyMax').textContent=rupiah(hi);
+  document.getElementById('sellTop').textContent=rupiah(sell);document.getElementById('sellReco').textContent=rupiah(sell);document.getElementById('sellBottom').textContent=rupiah(sell);
+  document.getElementById('profitVal').innerHTML=rupiah(sell-lo)+' <small>('+Math.round((sell-lo)/lo*100)+'% dari modal)</small>';
+  document.getElementById('hvBadge').style.display='none';
+  document.getElementById('ledger').innerHTML='<div class="lh"><span>Akun polosan</span><span>Rp</span></div>'+
+    '<div class="li mod"><div class="nm">Tarif tetap akun tanpa skin — tawar '+rupiah(lo)+', maksimal '+rupiah(hi)+'</div><div class="val">'+rupiah(sell)+'</div></div>';
+  document.getElementById('warnBox').innerHTML='<div class="warn">Mode <b>polosan</b>: tarif tetap, daftar skin diabaikan. Ubah tarifnya di Admin → Setelan Global.</div>';
+  window.__items=[];
 }
-function esc(s){ return String(s).replace(/[&<>]/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;"}[c]; }); }
-
-// File export hanya mendata agent yang di-unlock; 5 agent bawaan akun baru
-// tidak ikut tercatat, jadi ditambahkan sendiri.
-function agentCount(){
-  var base = parseInt($("baseAgents").value, 10);
-  if(isNaN(base)) base = 5;
-  return ownedAgents + base;
-}
-function fillAgents(){
-  if(ownedAgents === null) return;
-  var total = parseInt($("totalAgents").value, 10) || 30;
-  var have = agentCount();
-  var missing = total - have;
-  if(missing <= 0){ $("agentA").value = "Full Agent"; $("agentB").value = "Full Agent"; }
-  else { $("agentA").value = have + " Agent"; $("agentB").value = "-" + missing; }
-}
-["totalAgents","baseAgents"].forEach(function(id){
-  $(id).addEventListener("input", function(){ fillAgents(); build(); });
-});
-
-/* ---------- skin families (for BP suggestions) ---------- */
-function familyOf(name){
-  var words = String(name).trim().split(/\s+/);
-  var parts = words.slice();
-  while(parts.length > 1 && CUT_WORDS.indexOf(parts[parts.length - 1]) >= 0) parts.pop();
-  return parts.length === words.length ? null : parts.join(" ");
-}
-function buildFamilies(){
-  families = {};
-  allSkins.forEach(function(s){
-    var f = familyOf(s.name);
-    if(f) families[f] = (families[f] || 0) + 1;
-  });
-}
-function familyList(){
-  return Object.keys(families).filter(function(f){ return families[f] >= 2; })
-    .sort(function(a,b){ return families[b] - families[a] || a.localeCompare(b); });
-}
-
-/* ---------- urutan senjata ---------- */
-// Kata terakhir yang bukan nama senjata api dianggap melee, jadi Karambit,
-// Butterfly Knife, Blade, Wrench, dan sejenisnya otomatis masuk paling belakang.
-function weaponRank(name){
-  var parts = String(name).trim().split(/\s+/);
-  var i = WEAPONS.indexOf(parts[parts.length - 1]);
-  return i >= 0 ? i : MELEE_RANK;
-}
-function isMelee(name){ return weaponRank(name) === MELEE_RANK; }
-
-/* ---------- deteksi bundle ----------
-   Nama bundle diambil langsung dari valorant-api.com dan disimpan di cache
-   seminggu. Kalau gagal diambil, tool jatuh ke tebakan dari nama skin sendiri. */
-var BUNDLE_NAMES = [];   // nama bundle resmi, untuk label header
-var SKIN_THEME = {};     // nama skin -> themeUuid
-var LVL_SKIN = {};       // uuid skin-level -> nama skin
-var BP_PASSES = [];      // [{key, name, skins:[...], theme, melee}]
-var BP_SKIN_ALL = {};    // skin hadiah battle pass
-var AGENT_SKIN_ALL = {}; // skin hadiah agent contract
-var THEME_SIZE = {};     // themeUuid -> jumlah skin dalam tema itu
-
-function loadBundleNames(){
-  load("caption:bundles", function(c){
-    if(c && c.names && c.t && (Date.now() - c.t) < 7 * 864e5){
-      BUNDLE_NAMES = c.names; renderPicked(); build();
-    }
-  });
-  if(typeof fetch !== "function") return;
-  fetch("https://valorant-api.com/v1/bundles")
-    .then(function(r){ return r.json(); })
-    .then(function(j){
-      var seen = {};
-      (j.data || []).forEach(function(b){
-        var n = (b.displayName || "").trim();
-        if(n) seen[n] = 1;
-      });
-      var names = Object.keys(seen);
-      if(!names.length) return;
-      BUNDLE_NAMES = names;
-      save("caption:bundles", {t: Date.now(), names: names});
-      renderPicked(); build();
-    })
-    .catch(function(){});
-}
-
-/* Daftar skin lengkap dipakai untuk tahu sebuah bundle utuh atau tidak:
-   tiap skin punya themeUuid, jadi jumlah skin per tema = ukuran bundle asli.
-   Responsnya besar, jadi hanya peta ringkasnya yang disimpan di cache. */
-function loadSkinData(){
-  load("caption:skins", function(c){
-    if(c && c.map && c.t && (Date.now() - c.t) < 30 * 864e5){
-      SKIN_THEME = c.map; THEME_SIZE = c.size; LVL_SKIN = c.lvl || {}; afterSkinData();
-    }
-  });
-  if(typeof fetch !== "function") return;
-  fetch("https://valorant-api.com/v1/weapons/skins")
-    .then(function(r){ return r.json(); })
-    .then(function(j){
-      var map = {}, size = {}, lvl = {};
-      (j.data || []).forEach(function(sk){
-        var t = sk.themeUuid, n = (sk.displayName || "").trim();
-        if(!n) return;
-        if(t){ map[n] = t; size[t] = (size[t] || 0) + 1; }
-        // uuid tiap level skin, dipakai untuk menerjemahkan hadiah battle pass
-        (sk.levels || []).forEach(function(L){ if(L && L.uuid) lvl[L.uuid] = n; });
-        if(sk.uuid) lvl[sk.uuid] = n;
-      });
-      if(!Object.keys(map).length) return;
-      SKIN_THEME = map; THEME_SIZE = size; LVL_SKIN = lvl;
-      save("caption:skins", {t: Date.now(), map: map, size: size, lvl: lvl});
-      afterSkinData();
-    })
-    .catch(function(){});
-}
-
-// Data tema bisa datang setelah file di-upload; hitung ulang saat itu terjadi.
-function afterSkinData(){
-  if(rawPasses.length && !BP_PASSES.length && Object.keys(LVL_SKIN).length){
-    rebuildPasses(null); return;
-  }
-  if(allSkins.length){
-    rebuildBpSkins();
-    // Data BP sering datang setelah file dibaca; susun ulang pilihan default
-    // selama pengguna belum menyentuhnya sendiri.
-    if(!selectionTouched) applyDefaultSelection();
-  }
-  if(typeof renderSkins === "function" && allSkins.length){ renderSkins(); renderBP(); }
-  renderPicked(); build();
-}
-
-/* Battle pass di data Riot berbentuk contract. Tiap contract bertipe "Season"
-   memuat seluruh hadiahnya, jalur gratis maupun premium, jadi dari sini bisa
-   diketahui skin mana saja yang berasal dari battle pass — tidak peduli
-   akunnya punya pass itu atau tidak. */
-function loadContracts(){
-  load("caption:contracts2", function(c){
-    if(c && c.list && c.t && (Date.now() - c.t) < 7 * 864e5){
-      rebuildPasses(c.list);
-    }
-  });
-  if(typeof fetch !== "function") return;
-  fetch("https://valorant-api.com/v1/contracts")
-    .then(function(r){ return r.json(); })
-    .then(function(j){
-      var list = (j.data || [])
-        .filter(function(c){
-          var t = c.content && c.content.relationType;
-          return t === "Season" || t === "Agent";
-        })
-        .map(function(c){
-          var uuids = [];
-          (c.content.chapters || []).forEach(function(ch){
-            (ch.levels || []).forEach(function(L){
-              if(L.reward && L.reward.type === "EquippableSkinLevel") uuids.push(L.reward.uuid);
-            });
-            (ch.freeRewards || []).forEach(function(R){
-              if(R && R.type === "EquippableSkinLevel") uuids.push(R.uuid);
-            });
-          });
-          return { name: c.displayName || "", type: c.content.relationType, uuids: uuids };
-        })
-        .filter(function(c){ return c.uuids.length; });
-      if(!list.length) return;
-      save("caption:contracts2", {t: Date.now(), list: list});
-      rebuildPasses(list);
-    })
-    .catch(function(){});
-}
-
-// Terjemahkan uuid hadiah jadi nama skin. Butuh data skin, jadi dipanggil
-// ulang setiap salah satu dari keduanya selesai dimuat.
-var rawPasses = [];
-function rebuildPasses(list){
-  if(list) rawPasses = list;
-  if(!rawPasses.length || !Object.keys(LVL_SKIN).length) return;
-
-  BP_PASSES = []; BP_SKIN_ALL = {}; AGENT_SKIN_ALL = {}; bpContract = {};
-  rawPasses.forEach(function(c){
-    var seen = {}, skins = [];
-    c.uuids.forEach(function(u){
-      var n = LVL_SKIN[u];
-      if(n && !seen[n]){ seen[n] = 1; skins.push(n); }
-    });
-    if(!skins.length) return;
-
-    // Agent contract juga memberi skin gratis, jadi ikut ditandai tapi
-    // tidak masuk daftar battle pass.
-    if(c.type === "Agent"){
-      skins.forEach(function(n){ AGENT_SKIN_ALL[n] = 1; });
-      return;
-    }
-    skins.forEach(function(n){ BP_SKIN_ALL[n] = 1; });
-
-    var key = canonKey(c.name);
-    var theme = familyOf(skins[0]) || skins[0];
-    var melee = skins.filter(isMelee)[0] || null;
-    BP_PASSES.push({ key: key, name: c.name, skins: skins, theme: theme, melee: melee });
-    if(key) bpContract[key] = theme;
-  });
-  rebuildBpDict();
-  afterSkinData();
-}
-function passFor(act){
-  var k = canonKey(act);
-  return BP_PASSES.filter(function(p){ return p.key === k; })[0] || null;
-}
-
-function bundleOf(skin){
-  var best = null;
-  for(var i = 0; i < BUNDLE_NAMES.length; i++){
-    var b = BUNDLE_NAMES[i];
-    if(skin.length > b.length + 1 && skin.slice(0, b.length + 1) === b + " "){
-      if(!best || b.length > best.length) best = b;
-    }
-  }
-  return best;
-}
-function commonPrefix(names){
-  var parts = names[0].split(" ");
-  for(var i = 1; i < names.length; i++){
-    var o = names[i].split(" "), k = 0;
-    while(k < parts.length && k < o.length && parts[k] === o[k]) k++;
-    parts = parts.slice(0, k);
-  }
-  return parts.join(" ");
-}
-
-var groupOn = {};
-
-// Nama-nama ini pasti bundle beli, jadi chip-nya selalu ditampilkan walau
-// akun cuma punya satu skin dan bundle-nya belum lengkap. Ditampilkan saja,
-// bukan dinyalakan — kelengkapan tetap yang menentukan nyala atau tidak.
-var ALWAYS_SHOW = /^(VCT|Champions)\b/i;
-
-function groupKeyOf(name){
-  return bundleOf(name) || SKIN_THEME[name] || familyOf(name) || null;
-}
-
-/* Bundle dinyalakan otomatis hanya kalau akun punya seluruh isinya,
-   dihitung dari jumlah skin per tema. Bundle satu skin ikut terhitung. */
-function detectGroups(){
-  var byKey = {};
-  selected.forEach(function(sk){
-    var key = groupKeyOf(sk);
-    if(key) (byKey[key] = byKey[key] || []).push(sk);
-  });
-
-  var out = {};
-  Object.keys(byKey).forEach(function(key){
-    var items = byKey[key];
-    // Kelompok satu skin hanya boleh terbentuk kalau namanya memang terdaftar
-    // sebagai bundle di valorant-api. Tanpa syarat ini, skin gratis seperti
-    // Mythmaker Sheriff ikut jadi header "-Mythmaker Sheriff Bundle".
-    var label = bundleOf(items[0]);
-    if(!label && items.length > 1) label = commonPrefix(items);
-    if(!label || label === items[0]) return;
-
-    // Semua skin milik akun yang masuk kelompok yang sama
-    var owned = allSkins.filter(function(s){ return groupKeyOf(s.name) === key; })
-                        .map(function(s){ return s.name; });
-
-    // Ukuran bundle asli = jumlah skin dari tema-tema yang tercakup di kelompok ini
-    var themes = {};
-    owned.forEach(function(n){ if(SKIN_THEME[n]) themes[SKIN_THEME[n]] = 1; });
-    var total = Object.keys(themes).reduce(function(a, t){ return a + (THEME_SIZE[t] || 0); }, 0);
-
-    var complete = total > 0 && owned.length >= total;
-    var alwaysShow = ALWAYS_SHOW.test(label);
-
-    // Skin tunggal dari bundle yang belum lengkap tidak usah bikin chip,
-    // kecuali VCT / Champions yang sengaja tetap ditawarkan.
-    if(!complete && !alwaysShow && items.length < 2) return;
-
-    out[key] = {
-      label: label, items: items, owned: owned.length,
-      total: total, complete: complete
-    };
-    if(groupOn[key] === undefined) groupOn[key] = complete;
-  });
-  return out;
-}
-
-function layout(){
-  var map = detectGroups();
-  var keys = Object.keys(map)
-    .filter(function(k){ return groupOn[k]; })
-    .sort(function(a, b){ return map[a].label.localeCompare(map[b].label); });
-  var used = {};
-  keys.forEach(function(k){ map[k].items.forEach(function(sk){ used[sk] = 1; }); });
-  return {
-    all: map,
-    groups: keys.map(function(k){
-      return {
-        name: map[k].label,
-        items: map[k].items.slice().sort(function(x, y){ return weaponRank(x) - weaponRank(y); })
-      };
-    }),
-    loose: selected.filter(function(sk){ return !used[sk]; })
-  };
-}
-
-function insertSelected(name){
-  var r = weaponRank(name), i = 0;
-  while(i < selected.length && weaponRank(selected[i]) <= r) i++;
-  selected.splice(i, 0, name);
-}
-function sortSelected(){
-  selected = selected
-    .map(function(n, i){ return [n, i]; })
-    .sort(function(a, b){ return weaponRank(a[0]) - weaponRank(b[0]) || a[1] - b[1]; })
-    .map(function(x){ return x[0]; });
-}
-
-/* ---------- battle pass rows ---------- */
-var bpMax = {};
-
-function rebuildBpDict(){
-  bpDict = {};
-  [BP_SEED, bpContract, bpUser].forEach(function(src){
-    Object.keys(src).forEach(function(k){ if(src[k]) bpDict[k] = src[k]; });
-  });
-}
-
-function startsWithTheme(name, theme){
-  return name.length > theme.length &&
-         name.slice(0, theme.length + 1).toLowerCase() === (theme + " ").toLowerCase();
-}
-
-/* Isi sebuah battle pass dicari lewat themeUuid, bukan nama depan, karena
-   sebagian melee pass namanya lepas dari nama temanya — Heartstopper
-   melee-nya "Heart Splitter". Kalau data tema belum termuat, jatuh ke
-   pencocokan nama depan. */
-function bpSkinsOf(theme){
-  if(!theme) return [];
-  var seed = allSkins.filter(function(s){ return startsWithTheme(s.name, theme); });
-  var uuid = seed.length ? SKIN_THEME[seed[0].name] : null;
-  if(!uuid) return seed.map(function(s){ return s.name; });
-  return allSkins.filter(function(s){ return SKIN_THEME[s.name] === uuid; })
-                 .map(function(s){ return s.name; });
-}
-
-/* Pass dianggap Max kalau akun punya melee dari tema pass itu —
-   melee ada di tier terakhir, jadi memilikinya berarti pass-nya tamat. */
-function bpMeleeOf(theme, act){
-  // Sumber terbaik: melee yang memang jadi hadiah pass itu menurut data contract.
-  var pass = act ? passFor(act) : null;
-  if(pass && pass.melee) return pass.melee;
-  return bpSkinsOf(theme).filter(isMelee)[0] || null;
-}
-function ownsSkin(name){
-  return !!name && allSkins.some(function(s){ return s.name === name; });
-}
-
-/* Semua skin yang berasal dari battle pass milik akun ini. Skin begini
-   tidak ikut daftar jualan karena bukan bundle beli. */
-var bpSkins = {};      // skin battle pass milik akun ini
-var agentSkins = {};   // skin agent contract milik akun ini
-function rebuildAgentSkins(){
-  agentSkins = {};
-  allSkins.forEach(function(s){ if(AGENT_SKIN_ALL[s.name]) agentSkins[s.name] = 1; });
-}
-function isFreeSkin(name){ return !!(bpSkins[name] || agentSkins[name]); }
-
-function rebuildBpSkins(){
-  rebuildAgentSkins();
-  // Kalau data contract sudah ada, semua skin battle pass ditandai — termasuk
-  // hadiah jalur gratis dari pass yang tidak dimiliki akun ini.
-  if(Object.keys(BP_SKIN_ALL).length){
-    bpSkins = {};
-    allSkins.forEach(function(s){ if(BP_SKIN_ALL[s.name]) bpSkins[s.name] = 1; });
-    return;
-  }
-  bpSkins = {};
-  bpActs.forEach(function(act){
-    bpSkinsOf(bpDict[canonKey(act)]).forEach(function(n){ bpSkins[n] = 1; });
-  });
-}
-
-
-function renderBP(){
-  var box = $("bpList");
-  box.innerHTML = "";
-  if(!bpActs.length){
-    box.innerHTML = '<div class="empty">Akun ini tidak punya battle pass di file export.</div>';
-    $("bpCount").textContent = "";
-    return;
-  }
-  rebuildBpSkins();
-  var opts = familyList();
-  bpActs.forEach(function(act, i){
-    var row = document.createElement("div");
-    row.className = "bprow";
-
-    var key = canonKey(act);
-
-    var cb = document.createElement("input");
-    cb.type = "checkbox";
-    cb.title = "Centang = pass ini Max dan ikut masuk caption";
-
-    var inp = document.createElement("input");
-    inp.value = bpDict[key] || "";
-    inp.placeholder = "nama tema";
-    inp.setAttribute("list", "families");
-
-    var flag = document.createElement("span");
-    flag.className = "flag";
-
-    var actEl = document.createElement("span");
-    actEl.className = "act";
-
-    function check(){
-      var v = inp.value.trim();
-      inp.classList.toggle("unknown", !v);
-      var melee = bpMeleeOf(v, act);
-      var has = ownsSkin(melee);
-
-      // Status Max ditentukan otomatis sekali, setelah itu ikut pilihan manual.
-      if(bpMax[act] === undefined) bpMax[act] = has;
-      cb.checked = !!bpMax[act];
-      row.style.opacity = bpMax[act] ? "1" : ".45";
-
-      actEl.textContent = act + (melee ? "  ·  " + melee : "");
-      if(!v){ flag.textContent = ""; flag.title = ""; return; }
-      flag.textContent = has ? "" : "⚠";
-      flag.style.color = "var(--warn)";
-      flag.title = has ? "" :
-        (melee ? "Tidak punya " + melee + " — pass ini kemungkinan belum Max."
-               : "Melee pass ini tidak ketemu, tentukan sendiri.");
-    }
-
-    cb.addEventListener("change", function(){
-      bpMax[act] = cb.checked;
-      row.style.opacity = cb.checked ? "1" : ".45";
-      build(); updateBpCount();
-    });
-    inp.addEventListener("input", function(){
-      var v = inp.value.trim();
-      if(v) bpUser[key] = v; else delete bpUser[key];
-      rebuildBpDict();
-      delete bpMax[act];              // nama tema berubah, hitung ulang otomatis
-      check(); save("caption:bpdict", bpUser); syncPush();
-      rebuildBpSkins();
-      if(!selectionTouched) applyDefaultSelection();
-      renderSkins(); renderPicked(); build(); updateBpCount();
-    });
-    check();
-
-    row.appendChild(cb); row.appendChild(inp); row.appendChild(flag); row.appendChild(actEl);
-    box.appendChild(row);
-  });
-
-  var dl = $("families") || document.createElement("datalist");
-  dl.id = "families"; dl.innerHTML = "";
-  opts.forEach(function(f){
-    var o = document.createElement("option"); o.value = f; dl.appendChild(o);
-  });
-  if(!$("families")) document.body.appendChild(dl);
-
-  updateBpCount();
-}
-
-function updateBpCount(){
-  if(!bpActs.length){ $("bpCount").textContent = ""; return; }
-  var max = bpActs.filter(function(a){ return bpMax[a]; }).length;
-  $("bpCount").textContent = "— " + max + " dari " + bpActs.length + " Max";
-}
-
-/* ---------- rank ---------- */
-var RANK_ORDER = ["IRON","BRONZE","SILVER","GOLD","PLATINUM","DIAMOND","ASCENDANT","IMMORTAL","RADIANT"];
-function rankScore(r){
-  var p = String(r).toUpperCase().split(" ");
-  var i = RANK_ORDER.indexOf(p[0]);
-  return i < 0 ? -1 : i * 10 + (parseInt(p[1], 10) || 0);
-}
-function titleCase(s){ return String(s).toLowerCase().replace(/\b\w/g, function(c){ return c.toUpperCase(); }); }
-function buildRankChips(tiers){
-  var box = $("rankChips"); box.innerHTML = "";
-  var real = tiers.filter(function(t){ return rankScore(t.rank) >= 0; });
-  if(!real.length){ $("rank").value = "Unranked"; return; }
-  var peak = real.slice().sort(function(a,b){ return rankScore(b.rank) - rankScore(a.rank); })[0];
-  var last = real[real.length - 1];
-  [
-    ["Peak: " + titleCase(peak.rank), "Unranked (" + titleCase(peak.rank) + " Peak)"],
-    ["Terakhir: " + titleCase(last.rank), "Unranked (" + titleCase(last.rank) + " Last Act)"],
-    [titleCase(last.rank), titleCase(last.rank)],
-    ["Unranked", "Unranked"]
-  ].forEach(function(o){
-    var b = document.createElement("button");
-    b.className = "chip"; b.type = "button"; b.textContent = o[0];
-    b.addEventListener("click", function(){ $("rank").value = o[1]; build(); });
-    box.appendChild(b);
-  });
-  $("rank").value = "Unranked (" + titleCase(peak.rank) + " Peak)";
-}
-
-/* ---------- skins ---------- */
-function renderTierbar(){
-  var bar = $("tierbar"); bar.innerHTML = "";
-  TIERS.forEach(function(t){
-    var n = allSkins.filter(function(s){ return s.tier === t; }).length;
-    if(!n) return;
-    var b = document.createElement("button");
-    b.className = "tierbtn"; b.type = "button"; b.dataset.tier = t;
-    b.textContent = t + " " + n;
-    b.setAttribute("aria-pressed", String(!!tierFilter[t]));
-    b.addEventListener("click", function(){
-      tierFilter[t] = !tierFilter[t];
-      b.setAttribute("aria-pressed", String(tierFilter[t]));
-      renderSkins();
-    });
-    bar.appendChild(b);
-  });
-}
-function visibleSkins(){
-  var q = $("search").value.trim().toLowerCase();
-  var out = allSkins.filter(function(s){
-    return tierFilter[s.tier] && (!q || s.name.toLowerCase().indexOf(q) >= 0);
-  });
-  if($("sortMode").value === "weapon"){
-    out = out.slice().sort(function(a, b){
-      return weaponRank(a.name) - weaponRank(b.name) || a.name.localeCompare(b.name);
-    });
-  }
-  return out;
-}
-function renderSkins(){
-  var box = $("skinList"); box.innerHTML = "";
-  var vis = visibleSkins();
-  if(!vis.length){
-    box.innerHTML = '<div class="empty">' + (allSkins.length ? "Tidak ada skin yang cocok." : "Belum ada file. Upload dulu di atas.") + "</div>";
-  } else vis.forEach(function(s){
-    var row = document.createElement("div"); row.className = "row";
-    var lab = document.createElement("label");
-    var cb = document.createElement("input"); cb.type = "checkbox";
-    cb.checked = selected.indexOf(s.name) >= 0;
-    cb.addEventListener("change", function(){
-      selectionTouched = true;
-      if(cb.checked){ if(selected.indexOf(s.name) < 0) insertSelected(s.name); }
-      else selected = selected.filter(function(n){ return n !== s.name; });
-      renderPicked(); build();
-    });
-    var tag = document.createElement("span"); tag.className = "tag " + s.tier; tag.textContent = s.tier;
-    var nm = document.createElement("span"); nm.textContent = s.name;
-    lab.appendChild(cb); lab.appendChild(tag); lab.appendChild(nm);
-    if(bpSkins[s.name] || agentSkins[s.name]){
-      var free = document.createElement("span");
-      free.className = "tag bp";
-      free.textContent = bpSkins[s.name] ? "BP" : "Agent";
-      free.title = bpSkins[s.name]
-        ? "Skin battle pass — gratis, tidak ikut daftar jualan"
-        : "Skin agent contract — gratis, tidak ikut daftar jualan";
-      lab.appendChild(free);
-    }
-    row.appendChild(lab); box.appendChild(row);
-  });
-  updateCount();
-}
-function renderPicked(){
-  var box = $("picked"), chipBox = $("groupChips");
-  box.innerHTML = ""; chipBox.innerHTML = "";
-
-  var L = layout();
-
-  // chip untuk tiap bundle yang terdeteksi
-  Object.keys(L.all)
-    .sort(function(a, b){ return L.all[a].label.localeCompare(L.all[b].label); })
-    .forEach(function(k){
-      var g = L.all[k];
-      var btn = document.createElement("button");
-      btn.className = "chip" + (g.complete ? "" : " partial");
-      btn.type = "button";
-      btn.textContent = g.label + " " + g.owned + (g.total ? "/" + g.total : "");
-      btn.title = g.total
-        ? (g.complete
-            ? "Bundle lengkap — dikelompokkan"
-            : "Kurang " + (g.total - g.owned) + " skin, jadi masuk eceran. Klik kalau tetap mau dikelompokkan.")
-        : "Jumlah isi bundle belum diketahui — putuskan manual";
-      btn.setAttribute("aria-pressed", String(!!groupOn[k]));
-      btn.addEventListener("click", function(){
-        groupOn[k] = !groupOn[k]; renderPicked(); build();
-      });
-      chipBox.appendChild(btn);
-    });
-  if(!Object.keys(L.all).length && selected.length)
-    chipBox.innerHTML = '<span class="count">Tidak ada bundle yang terdeteksi dari skin terpilih.</span>';
-
-  if(!selected.length){
-    box.innerHTML = '<div class="empty">Belum ada yang dipilih.</div>';
-    updateCount(); return;
-  }
-
-  var n = 0;
-  L.groups.forEach(function(g){
-    var head = document.createElement("div");
-    head.className = "grouphead";
-    head.textContent = "-" + g.name + " Bundle";
-    box.appendChild(head);
-    g.items.forEach(function(name){ box.appendChild(pickRow(name, ++n)); });
-  });
-  if(L.groups.length && L.loose.length){
-    var sep = document.createElement("div");
-    sep.className = "grouphead"; sep.textContent = "Skins:";
-    box.appendChild(sep);
-  }
-  L.loose.forEach(function(name){ box.appendChild(pickRow(name, ++n)); });
-  updateCount();
-}
-
-function pickRow(name, n){
-  var i = selected.indexOf(name);
-  var row = document.createElement("div"); row.className = "pick";
-  var tier = (allSkins.filter(function(s){ return s.name === name; })[0] || {}).tier || "Custom";
-  var num = document.createElement("span"); num.className = "num"; num.textContent = n + ".";
-  var tag = document.createElement("span"); tag.className = "tag " + tier; tag.textContent = tier;
-  var nm = document.createElement("span"); nm.className = "nm"; nm.textContent = name;
-  var up = mini("▲", i <= 0, function(){ swap(i, i - 1); });
-  var dn = mini("▼", i < 0 || i === selected.length - 1, function(){ swap(i, i + 1); });
-  var rm = mini("✕", false, function(){
-    selected = selected.filter(function(x){ return x !== name; });
-    renderSkins(); renderPicked(); build();
-  });
-  rm.classList.add("x");
-  [num, tag, nm, up, dn, rm].forEach(function(el){ row.appendChild(el); });
-  return row;
-}
-
-/* Semua skin beli dicentang, skin battle pass tidak. Kalau data contract
-   belum termuat, jatuh ke aturan lama berbasis tier supaya skin BP tidak
-   ikut tercentang ramai-ramai. */
-function applyDefaultSelection(){
-  var haveBpData = Object.keys(BP_SKIN_ALL).length > 0;
-  selected = allSkins.filter(function(s){
-    if(isFreeSkin(s.name)) return false;
-    return haveBpData ? true : DEFAULT_ON[s.tier];
-  }).map(function(s){ return s.name; });
-  sortSelected();
-}
-
-function updateCount(){ $("skinCount").textContent = "— " + selected.length + " dipilih dari " + allSkins.length; }
-function mini(txt, disabled, fn){
-  var b = document.createElement("button");
-  b.className = "mini"; b.type = "button"; b.textContent = txt; b.disabled = disabled;
-  b.style.opacity = disabled ? ".3" : "1";
-  if(!disabled) b.addEventListener("click", fn);
-  return b;
-}
-function swap(a,b){ var t = selected[a]; selected[a] = selected[b]; selected[b] = t; renderPicked(); build(); }
-
-$("search").addEventListener("input", renderSkins);
-$("sortMode").addEventListener("change", renderSkins);
-$("checkVisible").addEventListener("click", function(){
-  selectionTouched = true;
-  visibleSkins().forEach(function(s){ if(selected.indexOf(s.name) < 0) insertSelected(s.name); });
-  renderSkins(); renderPicked(); build();
-});
-$("resortSel").addEventListener("click", function(){
-  sortSelected(); renderPicked(); build();
-});
-$("clearSel").addEventListener("click", function(){ selectionTouched = true; selected = []; renderSkins(); renderPicked(); build(); });
-$("sameprice").addEventListener("click", function(e){
-  e.preventDefault(); $("hargaB").value = $("hargaA").value; build();
-});
-
-/* ---------- caption ---------- */
-function v(id){ return $(id).value.trim(); }
-function lines(id){ return $(id).value.split("\n").map(function(s){ return s.trim(); }).filter(Boolean); }
-function thousands(x){
-  var d = String(x).replace(/\D/g, "");
-  return d ? d.replace(/\B(?=(\d{3})+(?!\d))/g, ".") : String(x || "");
-}
-
-function bpLines(){
-  var out = bpActs.filter(function(act){ return bpMax[act]; }).map(function(act){
-    var theme = bpDict[canonKey(act)];
-    return theme ? theme + " (" + act + ")" : act;
-  });
-  return out.concat(lines("bpExtra"));
-}
-
-function context(store){
-  var n = 0;
-  var bundle = [];
-  var bundleName = v("bundleName"), bundleItems = lines("bundleItems");
-  if(bundleName) bundle.push("-" + bundleName);
-  bundleItems.forEach(function(it){ bundle.push((++n) + ". " + it); });
-
-  var L = layout();
-  L.groups.forEach(function(g){
-    bundle.push("-" + g.name + " Bundle");
-    g.items.forEach(function(it){ bundle.push((++n) + ". " + it); });
-  });
-
-  var skins = L.loose.concat(lines("custom")).map(function(s){ return (++n) + ". " + s; });
-  var bp = bpLines().map(function(b, i){ return (i + 1) + ". " + b; });
-
-  return {
-    kode: v("kode" + store),
-    harga: thousands(v("harga" + store)),
-    agent: v("agent" + store),
-    bundle: bundle.join("\n"),
-    skins: skins.join("\n"),
-    bp: bp.join("\n"),
-    rank: v("rank"),
-    level: v("level"),
-    changename: $("changename").value,
-    region: v("region"),
-    mfa: $("mfa").value
-  };
-}
-
-function render(tpl, ctx){
-  return tpl.split("\n").map(function(line){
-    var only = /^\s*(\{[a-z]+\}\s*)+$/.test(line);
-    var out = line.replace(/\{([a-z]+)\}/g, function(m, k){
-      return ctx[k] !== undefined ? ctx[k] : m;
-    });
-    if(only && out.trim() === "") return null;
-    return out;
-  }).filter(function(l){ return l !== null; }).join("\n");
-}
-
-function build(){
-  var a = render($("tplA").value, context("A"));
-  var b = render($("tplB").value, context("B"));
-  $("capA").textContent = a;
-  $("capB").textContent = b;
-  $("countA").textContent = a.length + " karakter";
-  $("countB").textContent = b.length + " karakter";
-}
-
-/* ---------- template editor ---------- */
-$("tplA").value = DEFAULT_TPL.A;
-$("tplB").value = DEFAULT_TPL.B;
-
-var chipBox = $("phChips");
-PLACEHOLDERS.forEach(function(p){
-  var b = document.createElement("button");
-  b.className = "chip code"; b.type = "button"; b.textContent = p[0]; b.title = p[1];
-  b.addEventListener("click", function(){
-    var ta = $("tpl" + tplStore);
-    var s = ta.selectionStart, e = ta.selectionEnd;
-    ta.value = ta.value.slice(0, s) + p[0] + ta.value.slice(e);
-    ta.focus();
-    ta.selectionStart = ta.selectionEnd = s + p[0].length;
-    saveTpl(); build();
-  });
-  chipBox.appendChild(b);
-});
-
-function saveTpl(){ save("caption:tpl", {A:$("tplA").value, B:$("tplB").value}); syncPush(); }
-$("resetTpl").addEventListener("click", function(){
-  $("tpl" + tplStore).value = DEFAULT_TPL[tplStore];
-  saveTpl(); build();
-});
-
-/* ---------- template modal ---------- */
-function showTpl(store){
-  tplStore = store;
-  document.querySelectorAll(".tpltab").forEach(function(x){
-    x.setAttribute("aria-selected", String(x.dataset.tplstore === store));
-  });
-  $("tplA").hidden = store !== "A";
-  $("tplB").hidden = store !== "B";
-}
-document.querySelectorAll(".tpltab").forEach(function(t){
-  t.addEventListener("click", function(){ showTpl(t.dataset.tplstore); });
-});
-function openModal(){
-  showTpl(activeStore);
-  $("tplModal").hidden = false;
-  $("tpl" + tplStore).focus();
-}
-function closeModal(){ $("tplModal").hidden = true; }
-$("openTpl").addEventListener("click", openModal);
-$("closeTpl").addEventListener("click", closeModal);
-$("doneTpl").addEventListener("click", closeModal);
-$("tplModal").addEventListener("click", function(e){
-  if(e.target === $("tplModal")) closeModal();
-});
-document.addEventListener("keydown", function(e){
-  if(e.key === "Escape" && !$("tplModal").hidden) closeModal();
-});
-["tplA","tplB"].forEach(function(id){
-  $(id).addEventListener("input", function(){ saveTpl(); build(); });
-});
-
-/* ---------- tabs ---------- */
-document.querySelectorAll(".tab").forEach(function(t){
-  t.addEventListener("click", function(){
-    activeStore = t.dataset.store;
-    document.querySelectorAll(".tab").forEach(function(x){ x.setAttribute("aria-selected", String(x === t)); });
-    document.querySelectorAll(".pane").forEach(function(p){ p.hidden = p.dataset.store !== activeStore; });
-  });
-});
-
-/* ---------- copy / download ---------- */
-function text(store){ return $("cap" + store).innerText.replace(/\n{2,}$/, "\n"); }
-document.querySelectorAll("[data-copy]").forEach(function(btn){
-  btn.addEventListener("click", function(){
-    var txt = text(btn.dataset.copy);
-    var done = function(){
-      var old = btn.textContent; btn.textContent = "Tersalin";
-      setTimeout(function(){ btn.textContent = old; }, 1600);
-    };
-    var fallback = function(){
-      var ta = document.createElement("textarea");
-      ta.value = txt; ta.style.position = "fixed"; ta.style.opacity = "0";
-      document.body.appendChild(ta); ta.select();
-      try{ document.execCommand("copy"); done(); }catch(e){ btn.textContent = "Salin manual"; }
-      document.body.removeChild(ta);
-    };
-    if(navigator.clipboard && navigator.clipboard.writeText)
-      navigator.clipboard.writeText(txt).then(done, fallback);
-    else fallback();
-  });
-});
-document.querySelectorAll("[data-dl]").forEach(function(btn){
-  btn.addEventListener("click", function(){
-    var s = btn.dataset.dl;
-    var blob = new Blob([text(s)], {type:"text/plain;charset=utf-8"});
-    var a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = (v("kode" + s) || "caption") + "-" + (s === "A" ? "valjubel" : "tokovalo") + ".txt";
-    a.click();
-    setTimeout(function(){ URL.revokeObjectURL(a.href); }, 1000);
-  });
-});
-
-/* ---------- live rebuild ---------- */
-document.querySelectorAll("input, textarea, select").forEach(function(el){
-  if(el.type === "file" || el.type === "checkbox" || el.id === "tplA" || el.id === "tplB") return;
-  el.addEventListener("input", build);
-  el.addEventListener("change", build);
-});
-["hargaA","hargaB"].forEach(function(id){
-  $(id).addEventListener("blur", function(){ if(this.value.trim()) this.value = thousands(this.value); build(); });
-});
-
-/* ---------- sinkronisasi lewat Netlify Blobs ----------
-   Sumber kebenaran tetap localStorage supaya tool jalan instan dan tetap
-   berfungsi offline. Blobs dipakai sebagai salinan bersama antar perangkat:
-   yang timestamp-nya lebih baru menang. */
-var SYNC_URL = "/.netlify/functions/settings";
-var syncSlot = "default";
-try{
-  var qs = new URLSearchParams(location.search).get("k");
-  if(qs) syncSlot = qs;
-}catch(e){}
-var syncOK = false, syncTimer = null, localTs = 0;
-
-function syncStatus(msg){ var el = $("setStatus"); if(el) el.textContent = msg; }
-
-function syncPull(){
-  if(typeof fetch !== "function") return;
-  fetch(SYNC_URL + "?k=" + encodeURIComponent(syncSlot))
-    .then(function(r){ return r.ok ? r.json() : Promise.reject(r.status); })
-    .then(function(res){
-      syncOK = true;
-      if(res && res.data && (res.ts || 0) > localTs){
-        applySettings(res.data, true);
-        syncStatus("Pengaturan diambil dari server (slot: " + syncSlot + ").");
-      } else {
-        syncStatus("Tersinkron ke server. Slot: " + syncSlot + ".");
-      }
-    })
-    .catch(function(){
-      syncOK = false;
-      syncStatus("Server sinkronisasi tidak aktif — pengaturan hanya tersimpan di browser ini.");
-    });
-}
-
-function syncPush(){
-  if(!syncOK || typeof fetch !== "function") return;
-  clearTimeout(syncTimer);
-  syncTimer = setTimeout(function(){
-    localTs = Date.now();
-    fetch(SYNC_URL + "?k=" + encodeURIComponent(syncSlot), {
-      method: "POST",
-      headers: {"content-type": "application/json"},
-      body: JSON.stringify({ts: localTs, data: allSettings()})
-    })
-      .then(function(r){ if(!r.ok) throw r.status; syncStatus("Tersimpan ke server " + new Date().toLocaleTimeString() + "."); })
-      .catch(function(){ syncStatus("Gagal menyimpan ke server — salinan lokal tetap aman."); });
-  }, 1500);
-}
-
-/* ---------- pengaturan umum ---------- */
-var PREF_KEYS = ["region","totalAgents","baseAgents"];
-function savePrefs(){
-  var o = {}; PREF_KEYS.forEach(function(k){ o[k] = $(k).value; });
-  save("caption:prefs", o);
-  syncPush();
-}
-PREF_KEYS.forEach(function(k){ $(k).addEventListener("change", savePrefs); });
-
-function allSettings(){
-  var o = { tpl: {A:$("tplA").value, B:$("tplB").value}, bpDict: bpUser, prefs: {} };
-  PREF_KEYS.forEach(function(k){ o.prefs[k] = $(k).value; });
-  return o;
-}
-function applySettings(o, fromServer){
-  if(o.tpl){ if(o.tpl.A) $("tplA").value = o.tpl.A; if(o.tpl.B) $("tplB").value = o.tpl.B; }
-  if(o.bpDict){ Object.keys(o.bpDict).forEach(function(k){ bpUser[k] = o.bpDict[k]; }); rebuildBpDict(); }
-  if(o.prefs) PREF_KEYS.forEach(function(k){ if(o.prefs[k] != null) $(k).value = o.prefs[k]; });
-  save("caption:tpl", {A:$("tplA").value, B:$("tplB").value});
-  save("caption:bpdict", bpUser);
-  var pr = {}; PREF_KEYS.forEach(function(k){ pr[k] = $(k).value; });
-  save("caption:prefs", pr);
-  if(!fromServer) syncPush();
-  fillAgents(); renderBP(); build();
-}
-$("exportSet").addEventListener("click", function(){
-  var blob = new Blob([JSON.stringify(allSettings(), null, 2)], {type:"application/json"});
-  var a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = "caption-settings.json";
-  a.click();
-  setTimeout(function(){ URL.revokeObjectURL(a.href); }, 1000);
-});
-$("importSet").addEventListener("click", function(){ $("importFile").click(); });
-$("importFile").addEventListener("change", function(e){
-  if(!e.target.files.length) return;
-  var fr = new FileReader();
-  fr.onload = function(){
-    try{
-      applySettings(JSON.parse(String(fr.result)));
-      $("setStatus").textContent = "Pengaturan berhasil dimuat.";
-    }catch(err){
-      $("setStatus").textContent = "File cadangan tidak terbaca.";
-    }
-  };
-  fr.readAsText(e.target.files[0]);
-  e.target.value = "";
-});
-
-/* ---------- boot ---------- */
-loadBundleNames();
-loadSkinData();
-loadContracts();
-rebuildBpDict();
-load("caption:bpdict", function(saved){
-  Object.keys(saved).forEach(function(k){ bpUser[k] = saved[k]; });
-  rebuildBpDict();
-  renderBP(); build();
-});
-load("caption:tpl", function(t){
-  if(t.A) $("tplA").value = t.A;
-  if(t.B) $("tplB").value = t.B;
-  build();
-});
-load("caption:prefs", function(o){
-  PREF_KEYS.forEach(function(k){ if(o[k] != null) $(k).value = o[k]; });
-  build();
-});
-if(!hasLS && !window.storage)
-  syncStatus("Browser ini memblokir penyimpanan lokal — andalkan server sinkronisasi atau ekspor ke file.");
-syncPull();
-build();
+function setAcctType(v){acctType=v;document.querySelectorAll('#acctType button').forEach(b=>b.classList.toggle('on',b.dataset.v===v));document.getElementById('skins').disabled=(v==='bare');calc();}
+function confirmAlias(i){const it=window.__items[i];if(!it||!it.candidate)return;sessionAliases[norm(it.raw)]=it.candidate.name;localStorage.setItem(LS_SESSION_ALIAS,JSON.stringify(sessionAliases));calc();toast('Dicocokkan: '+it.candidate.name);}
+function fillSources(){const s=document.getElementById('source');const cur=s.value;s.innerHTML='';(S.sources||[]).forEach(x=>{const o=document.createElement('option');o.value=x.name;o.textContent=x.name+((x.tawar||x.maks)?' (+'+x.tawar+'% / +'+x.maks+'%)':'');s.appendChild(o);});if([...s.options].some(o=>o.value===cur))s.value=cur;sourceHint();}
+function sourceHint(){const s=document.getElementById('source');const x=(S.sources||[]).find(y=>y.name===s.value);document.getElementById('sourceHint').textContent=(x&&(x.tawar||x.maks))?'Akun dari '+x.name+': tawar +'+x.tawar+'%, maksimal +'+x.maks+'%.':'';}
+function setPremier(v){premierStuck=v;document.querySelectorAll('#premier button').forEach(b=>b.classList.toggle('on',parseInt(b.dataset.v)===v));calc();}
+
+/* ---------- views / admin ---------- */
+function showView(v){document.getElementById('view-calc').style.display=v==='calc'?'block':'none';document.getElementById('view-admin').style.display=v==='admin'?'block':'none';document.getElementById('navCalc').classList.toggle('on',v==='calc');document.getElementById('navAdmin').classList.toggle('on',v==='admin');if(v==='admin')renderAdmin();window.scrollTo(0,0);}
+function openAdmin(){if(sessionStorage.getItem('jubel_pin')===ADMIN_PIN){showView('admin');return;}document.getElementById('pinErr').classList.remove('on');document.getElementById('pinInput').value='';document.getElementById('pinModal').classList.add('on');setTimeout(()=>document.getElementById('pinInput').focus(),50);}
+function closePin(){document.getElementById('pinModal').classList.remove('on');}
+function checkPin(){const v=document.getElementById('pinInput').value;if(v===ADMIN_PIN){sessionStorage.setItem('jubel_pin',v);closePin();showView('admin');}else document.getElementById('pinErr').classList.add('on');}
+function tab(t){document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.t===t));document.querySelectorAll('.sec').forEach(s=>s.classList.toggle('on',s.id==='sec-'+t));}
+function notifs(){const now=Date.now(),soon=now+7*864e5;const ov=S.overrides||[];const expired=ov.filter(o=>o.expires_at&&new Date(o.expires_at).getTime()<now);const expiring=ov.filter(o=>o.expires_at&&new Date(o.expires_at).getTime()>=now&&new Date(o.expires_at).getTime()<=soon);const dis=new Set(S.dismissed_new||[]);const fresh=(S.new_skins||[]).filter(n=>!dis.has(n));
+  const lines={};fresh.forEach(n=>{const w=classify(n);let line=n;if(w!=='Other'&&w!=='Melee')line=n.replace(new RegExp('\\s+'+w+'$','i'),'');else if(w==='Melee'){const tk=n.split(' ');if(tk.length>1&&MELEE_KW.includes(tk[tk.length-1].toLowerCase()))line=tk.slice(0,-1).join(' ');}(lines[line]=lines[line]||[]).push(n);});return {expired,expiring,newLines:lines,count:expired.length+expiring.length+Object.keys(lines).length+(typeof staleFactors==='function'?(staleFactors().length?1:0):0)};}
+function renderNavDot(){const n=notifs().count;const d=document.getElementById('navDot');d.style.display=n?'flex':'none';d.textContent=n;const c=document.getElementById('cntNotif');if(c){c.style.display=n?'inline':'none';c.textContent=n;}}
+function renderAdmin(){renderNotif();renderOverrides();renderWeights();renderGlobal();renderAliases();renderAudit();renderSaveStatus();renderNavDot();fillWeaponSelect();
+  const exp=document.getElementById('ovExp');if(exp&&!exp.value){const d=new Date(Date.now()+(S.knobs.hype_days||30)*864e5);exp.value=d.toISOString().slice(0,10);}
+  renderScorePick();}
+function staleFactors(){const d=defaultSettings().knobs;const keys={buy_factor:'Beli · Tawar',buy_max:'Beli · Maksimal',sell_factor:'Jual · Rekomendasi',sell_top:'Jual · Atas',sell_bottom:'Jual · Bawah'};return Object.keys(keys).filter(k=>Math.abs((S.knobs[k]??d[k])-d[k])>0.0001).map(k=>({k,label:keys[k],now:S.knobs[k],def:d[k]}));}
+function resetFactors(){const d=defaultSettings().knobs;['buy_factor','buy_max','sell_factor','sell_top','sell_bottom'].forEach(k=>S.knobs[k]=d[k]);markDirty();renderAdmin();calc();toast('Faktor harga disamakan dengan bawaan model — klik Simpan');}
+function renderNotif(){const N=notifs();const el=document.getElementById('notifBody');let h='';
+  const st=staleFactors();if(st.length){h+='<div class="notif"><div class="t"><b>Faktor harga berbeda dari bawaan model '+M.model_version+':</b> '+st.map(x=>esc(x.label)+' <span class="pill fire">'+x.now+'</span> (bawaan '+x.def+')').join(' · ')+'<small>Setelan tersimpan mengalahkan bawaan model. Kalau ini tidak disengaja (mis. sisa setelan lama), samakan.</small></div><div class="a"><button class="btn xs teal" onclick="resetFactors()">Samakan dengan bawaan</button></div></div>';}
+  N.expired.forEach(o=>{h+='<div class="notif exp"><div class="t"><b>Kadaluarsa:</b> '+esc(o.skin)+' <span class="pill red">'+(o.type==='hype'?'hype '+o.score+'/10':'Rp'+o.value.toLocaleString('id-ID'))+'</span><small>Berlaku sampai '+fmtD(o.expires_at)+' ('+Math.abs(daysLeft(o.expires_at))+' hari lalu) · sudah <b>tidak dipakai</b>, harga kembali ke dasar. Masih relevan?'+(o.reason?' · '+esc(o.reason):'')+'</small></div><div class="a"><button class="btn xs teal" onclick="extendOv(\''+o.id+'\',30)">Perpanjang 30 hari</button><button class="btn xs" onclick="editOv(\''+o.id+'\')">Adjust</button><button class="btn xs ghost" onclick="delOv(\''+o.id+'\')">Hapus</button></div></div>';});
+  N.expiring.forEach(o=>{h+='<div class="notif"><div class="t"><b>Segera kadaluarsa ('+daysLeft(o.expires_at)+' hari):</b> '+esc(o.skin)+' <span class="pill fire">'+(o.type==='hype'?'hype '+o.score+'/10':'Rp'+o.value.toLocaleString('id-ID'))+'</span><small>Sampai '+fmtD(o.expires_at)+'. Cek apakah masih rame.'+(o.reason?' · '+esc(o.reason):'')+'</small></div><div class="a"><button class="btn xs teal" onclick="extendOv(\''+o.id+'\',30)">Perpanjang 30 hari</button><button class="btn xs" onclick="editOv(\''+o.id+'\')">Adjust</button><button class="btn xs ghost" onclick="delOv(\''+o.id+'\')">Hapus</button></div></div>';});
+  const lines=Object.entries(N.newLines);if(lines.length){lines.forEach(([line,names])=>{h+='<div class="notif new"><div class="t"><b>Bundle / skin baru terdeteksi:</b> '+esc(line)+' <span class="pill teal">'+names.length+' item</span><small>'+esc(names.join(', '))+'<br>Belum ada di model — sementara dihargai dari tier resminya. Bundle baru biasanya lebih tinggi; kalau lagi hype, tandai trending.</small></div><div class="a"><button class="btn xs teal" onclick="prefillOv(\''+esc(names[0]).replace(/'/g,"\\'")+'\')">Tandai trending</button><button class="btn xs ghost" onclick="dismissNew(\''+esc(line).replace(/'/g,"\\'")+'\')">Sudah dilihat</button></div></div>';});}
+  if(!h)h='<div class="ok">✓ Tidak ada yang perlu dicek. Semua override masih berlaku'+(S.last_sync?', daftar skin terakhir di-sync '+fmtDT(S.last_sync):'')+'.</div>';
+  el.innerHTML=h;}
+function extendOv(id,days){const o=S.overrides.find(x=>x.id===id);if(!o)return;const base=new Date(o.expires_at)>new Date()?new Date(o.expires_at):new Date();o.expires_at=new Date(base.getTime()+days*864e5).toISOString().slice(0,10);markDirty();renderAdmin();buildIndex();calc();toast('Diperpanjang s/d '+fmtD(o.expires_at));}
+function delOv(id){if(!confirm('Hapus override ini?'))return;S.overrides=S.overrides.filter(x=>x.id!==id);markDirty();renderAdmin();calc();}
+function editOv(id){const o=S.overrides.find(x=>x.id===id);if(!o)return;tab('trend');document.getElementById('ovSkin').value=o.skin;document.getElementById('ovType').value=o.type;ovTypeChange();if(o.type==='hype')setScore(o.score);else document.getElementById('ovValue').value=o.value;document.getElementById('ovExp').value=(o.expires_at||'').slice(0,10);document.getElementById('ovReason').value=o.reason||'';S.overrides=S.overrides.filter(x=>x.id!==id);markDirty();renderOverrides();showOvBase();window.scrollTo(0,0);}
+function dismissNew(line){const names=Object.entries(notifs().newLines).find(([l])=>l===line);if(!names)return;S.dismissed_new=[...(S.dismissed_new||[]),...names[1]];S.seen_skins=[...new Set([...(S.seen_skins||[]),...names[1]])];markDirty();renderAdmin();}
+function prefillOv(name){tab('trend');document.getElementById('ovSkin').value=name;showOvBase();window.scrollTo(0,0);}
+/* overrides */
+let ovScoreVal=5;
+function renderScorePick(){const el=document.getElementById('ovScore');if(!el||el.children.length)return;for(let i=1;i<=10;i++){const b=document.createElement('button');b.textContent=i;b.onclick=()=>setScore(i);el.appendChild(b);}setScore(ovScoreVal);}
+function setScore(n){ovScoreVal=n;document.querySelectorAll('#ovScore button').forEach(b=>b.classList.toggle('on',parseInt(b.textContent)===n));document.getElementById('ovScoreHint').textContent='Skor '+n+' → nilai jual ×'+(1+n*(S.knobs.hype_step||0)).toFixed(2)+' (+'+Math.round(n*(S.knobs.hype_step||0)*100)+'%)';}
+function ovTypeChange(){const t=document.getElementById('ovType').value;document.getElementById('ovScoreWrap').style.display=t==='hype'?'block':'none';document.getElementById('ovValueWrap').style.display=t==='value'?'block':'none';}
+function showOvBase(){const v=document.getElementById('ovSkin').value;const k=norm(v);const inf=INDEX[k];const el=document.getElementById('ovBase');if(!inf){el.textContent=v?'Nama tidak dikenal — pilih dari saran.':'';return;}const b=baseValue(inf);el.innerHTML='Nilai dasar saat ini: <b style="color:var(--gold)">'+rupiah(b.v)+'</b> ('+(b.src==='model'?'model':b.src==='edit'?'edit admin':b.src==='tier'?'tier '+inf.tier:'rata-rata senjata')+')';}
+function addOverride(){const name=document.getElementById('ovSkin').value.trim();const inf=INDEX[norm(name)];if(!inf)return toast('Pilih nama skin dari saran',true);const type=document.getElementById('ovType').value;const exp=document.getElementById('ovExp').value;if(!exp)return toast('Isi tanggal berlaku',true);
+  const o={id:uid(),skin:inf.name,type,expires_at:exp,reason:document.getElementById('ovReason').value.trim(),created_at:new Date().toISOString()};
+  if(type==='hype')o.score=ovScoreVal;else{const v=parseFloat(document.getElementById('ovValue').value);if(!v||v<=0)return toast('Isi nilai manual',true);o.value=Math.round(v);}
+  S.overrides=S.overrides.filter(x=>x.skin!==inf.name);S.overrides.push(o);markDirty();document.getElementById('ovSkin').value='';document.getElementById('ovReason').value='';document.getElementById('ovValue').value='';document.getElementById('ovBase').textContent='';const d=new Date(Date.now()+(S.knobs.hype_days||30)*864e5);document.getElementById('ovExp').value=d.toISOString().slice(0,10);renderAdmin();calc();toast('Override ditambahkan: '+inf.name);}
+function renderOverrides(){const tb=document.getElementById('ovTable');const ov=(S.overrides||[]).slice().sort((a,b)=>new Date(a.expires_at)-new Date(b.expires_at));if(!ov.length){tb.innerHTML='<tr><td colspan="8" class="cempty">Belum ada override. Tambahkan skin yang lagi rame di atas.</td></tr>';return;}
+  tb.innerHTML=ov.map(o=>{const inf=INDEX[norm(o.skin)]||{name:o.skin,weapon:classify(o.skin),tier:null};const e=effective(inf);const exp=o.expires_at&&new Date(o.expires_at)<new Date();const dl=daysLeft(o.expires_at);
+    return '<tr><td><b>'+esc(o.skin)+'</b></td><td>'+(o.type==='hype'?'<span class="pill fire">hype '+o.score+'/10</span>':'<span class="pill g">manual</span>')+'</td><td class="mono">'+rupiah(e.base)+'</td><td class="mono" style="color:var(--gold)">'+(exp?'<s style="color:var(--muted)">'+rupiah(o.type==='hype'?Math.round(e.base*(1+o.score*S.knobs.hype_step)):o.value)+'</s> → '+rupiah(e.base):rupiah(e.value)+' <small style="color:var(--muted)">×'+(e.mult||1).toFixed(2)+'</small>')+'</td><td class="mono">'+fmtD(o.expires_at)+'</td><td>'+(exp?'<span class="pill red">kadaluarsa</span>':dl<=7?'<span class="pill fire">'+dl+' hari lagi</span>':'<span class="pill teal">aktif</span>')+'</td><td style="color:var(--muted);font-size:12px">'+esc(o.reason||'—')+'</td><td><div style="display:flex;gap:5px"><button class="btn xs" onclick="extendOv(\''+o.id+'\',30)">+30h</button><button class="btn xs" onclick="editOv(\''+o.id+'\')">Edit</button><button class="btn xs ghost" onclick="delOv(\''+o.id+'\')">✕</button></div></td></tr>';}).join('');}
+/* suggest box */
+function attachSuggest(inputId,listId,onPick){const inp=document.getElementById(inputId),list=document.getElementById(listId);inp.addEventListener('input',()=>{const q=norm(inp.value);if(q.length<2){list.classList.remove('on');return;}const res=[];for(const k in INDEX){const s=k.includes(q)?1:score(q,k);if(s>=0.5)res.push([s,INDEX[k]]);}res.sort((a,b)=>b[0]-a[0]);const top=res.slice(0,12);if(!top.length){list.classList.remove('on');return;}list.innerHTML=top.map(([s,i])=>'<div data-n="'+esc(i.name)+'">'+esc(i.name)+'<small>'+i.weapon+(i.tier?' · '+i.tier:'')+(i.inModel?'':' · belum di model')+'</small></div>').join('');list.classList.add('on');list.querySelectorAll('div').forEach(d=>d.onclick=()=>{inp.value=d.dataset.n;list.classList.remove('on');onPick&&onPick();});});inp.addEventListener('blur',()=>setTimeout(()=>list.classList.remove('on'),150));}
+/* weights */
+let wSortKey='eff',wSortDir=-1;function wSort(k){if(wSortKey===k)wSortDir*=-1;else{wSortKey=k;wSortDir=k==='name'?1:-1;}renderWeights();}
+function fillWeaponSelect(){const s=document.getElementById('wWeapon');if(s.options.length>1)return;[...GUNS,'Melee','Other'].forEach(w=>{const o=document.createElement('option');o.value=w;o.textContent=w;s.appendChild(o);});}
+function renderWeights(){const q=norm(document.getElementById('wSearch').value||'');const wf=document.getElementById('wWeapon').value;const ff=document.getElementById('wFilter').value;
+  let rows=Object.values(INDEX).filter(i=>i.inModel||S.skin_edits[i.name]!=null||overrideFor(i.name)).map(i=>{const e=effective(i);return {name:i.name,weapon:i.weapon,tier:i.tier,base:e.base,eff:e.value,src:e.src,ov:e.ov,mult:e.mult};});
+  if(q)rows=rows.filter(r=>norm(r.name).includes(q));if(wf)rows=rows.filter(r=>r.weapon===wf);if(ff==='ov')rows=rows.filter(r=>r.ov);if(ff==='edit')rows=rows.filter(r=>r.src==='edit');
+  rows.sort((a,b)=>{const av=a[wSortKey],bv=b[wSortKey];return (av<bv?-1:av>bv?1:0)*wSortDir;});if(ff==='top')rows=rows.slice(0,50);
+  const tb=document.getElementById('wTable');if(!rows.length){tb.innerHTML='<tr><td colspan="6" class="cempty">Tidak ada.</td></tr>';return;}
+  tb.innerHTML=rows.slice(0,400).map((r,i)=>'<tr><td class="mono" style="color:var(--muted)">'+(i+1)+'</td><td><b>'+esc(r.name)+'</b>'+(r.src==='edit'?' <span class="pill g">edit</span>':'')+'</td><td><span class="pill g">'+r.weapon+'</span>'+(r.tier?' <small style="color:var(--muted2)">'+r.tier+'</small>':'')+'</td><td><input class="inl" type="number" step="1000" value="'+r.base+'" onchange="editBase(\''+esc(r.name).replace(/'/g,"\\'")+'\',this.value)" title="model: Rp'+(M.skins[r.name]??'-')+'">'+(r.src==='edit'?' <button class="btn xs ghost" onclick="resetBase(\''+esc(r.name).replace(/'/g,"\\'")+'\')" title="kembali ke model">↺</button>':'')+'</td><td>'+(r.ov?(r.ov.expired?'<span class="pill red">kadaluarsa</span>':'<span class="pill fire">🔥 ×'+(r.mult||1).toFixed(2)+'</span>'):'<span style="color:var(--muted2)">—</span>')+'</td><td class="mono" style="color:var(--gold);font-weight:700">'+rupiah(r.eff)+'</td></tr>').join('')+(rows.length>400?'<tr><td colspan="6" class="cempty">…'+(rows.length-400)+' lagi, persempit pencarian.</td></tr>':'');}
+function editBase(name,v){const n=parseFloat(v);if(!n||n<0)return;if(M.skins[name]!=null&&Math.round(n)===M.skins[name]){delete S.skin_edits[name];}else S.skin_edits[name]=Math.round(n);markDirty();buildIndex();renderWeights();calc();}
+function resetBase(name){delete S.skin_edits[name];markDirty();buildIndex();renderWeights();calc();}
+/* global */
+const GMAP={g_buy_factor:'buy_factor',g_buy_max:'buy_max',g_sell_top:'sell_top',g_sell_factor:'sell_factor',g_sell_bottom:'sell_bottom',g_rounding:'rounding',g_market:'market',g_hv_strength:'hv_strength',g_prem_lo:'premier_lo',g_prem_hi:'premier_hi',g_hype_step:'hype_step',g_hype_days:'hype_days',g_bare_lo:'bare_buy_lo',g_bare_hi:'bare_buy_hi',g_bare_sell:'bare_sell'};
+function renderGlobal(){renderSources();for(const id in GMAP){const el=document.getElementById(id);el.value=S.knobs[GMAP[id]];el.onchange=()=>{S.knobs[GMAP[id]]=(el.tagName==='SELECT')?el.value:parseFloat(el.value);markDirty();calc();if(GMAP[id]==='hype_step')setScore(ovScoreVal);};}
+  const tb=document.querySelector('#hvTable tbody');tb.innerHTML=S.hv_points.map((p,i)=>'<tr><td><input class="inl" type="number" step="100000" value="'+p[0]+'" onchange="hvEdit('+i+',0,this.value)"></td><td><input class="inl" type="number" step="0.01" value="'+p[1]+'" onchange="hvEdit('+i+',1,this.value)"></td><td><button class="btn xs ghost" onclick="hvDel('+i+')">✕</button></td></tr>').join('');
+  const tb2=document.getElementById('tierBox');tb2.innerHTML=['Select','Deluxe','Premium','Exclusive','Ultra'].map(t=>'<div class="k"><label>'+t+'</label><input type="number" step="0.05" value="'+(S.tier_mult[t]??1)+'" onchange="S.tier_mult[\''+t+'\']=parseFloat(this.value);markDirty();calc()"></div>').join('');
+  const cb=document.getElementById('concBox');cb.innerHTML=S.concentration.map((c,i)=>'<div style="text-align:center"><div style="font-size:10px;color:var(--muted);text-transform:uppercase">ke-'+(i+1)+'</div><input class="inl" type="number" step="0.05" min="0" max="1" value="'+c+'" style="width:70px" onchange="S.concentration['+i+']=parseFloat(this.value);markDirty();calc()"></div>').join('');}
+function renderSources(){const tb=document.querySelector('#srcTable tbody');tb.innerHTML=(S.sources||[]).map((s,i)=>'<tr><td><input type="text" value="'+esc(s.name)+'" onchange="S.sources['+i+'].name=this.value;markDirty();fillSources();calc()"></td><td><input class="inl" type="number" step="1" value="'+(s.tawar||0)+'" onchange="S.sources['+i+'].tawar=parseFloat(this.value)||0;markDirty();fillSources();calc()"></td><td><input class="inl" type="number" step="1" value="'+(s.maks||0)+'" onchange="S.sources['+i+'].maks=parseFloat(this.value)||0;markDirty();fillSources();calc()"></td><td><button class="btn xs ghost" onclick="S.sources.splice('+i+',1);markDirty();renderSources();fillSources();calc()">✕</button></td></tr>').join('');}
+function srcAdd(){(S.sources=S.sources||[]).push({name:'Baru',tawar:0,maks:0});markDirty();renderSources();fillSources();}
+function hvEdit(i,j,v){S.hv_points[i][j]=parseFloat(v);S.hv_points.sort((a,b)=>a[0]-b[0]);markDirty();renderGlobal();calc();}
+function hvDel(i){S.hv_points.splice(i,1);markDirty();renderGlobal();calc();}
+function hvAddRow(){const last=S.hv_points[S.hv_points.length-1]||[2000000,1];S.hv_points.push([last[0]+1000000,+(last[1]+0.1).toFixed(2)]);markDirty();renderGlobal();}
+/* alias */
+function addAlias(){const from=norm(document.getElementById('alFrom').value);const to=document.getElementById('alTo').value.trim();if(!from||!to)return toast('Isi keduanya',true);if(!INDEX[norm(to)])return toast('Nama resmi harus dipilih dari saran',true);S.aliases[from]=INDEX[norm(to)].name;markDirty();document.getElementById('alFrom').value='';document.getElementById('alTo').value='';renderAliases();calc();toast('Alias ditambahkan');}
+function delAlias(k){delete S.aliases[k];markDirty();renderAliases();calc();}
+function renderAliases(){const tb=document.getElementById('alTable');const ks=Object.keys(S.aliases||{}).sort();tb.innerHTML=ks.length?ks.map(k=>'<tr><td class="mono">'+esc(k)+'</td><td><b>'+esc(S.aliases[k])+'</b></td><td><button class="btn xs ghost" onclick="delAlias(\''+esc(k).replace(/'/g,"\\'")+'\')">✕</button></td></tr>').join(''):'<tr><td colspan="3" class="cempty">Belum ada alias.</td></tr>';}
+function renderAudit(){const tb=document.getElementById('auditTable');const a=S.audit||[];tb.innerHTML=a.length?a.map(e=>'<tr><td class="mono" style="color:var(--muted);white-space:nowrap">'+fmtDT(e.ts)+'</td><td>'+esc(e.item)+'</td><td class="mono" style="color:var(--red)">'+esc(e.from)+'</td><td class="mono" style="color:var(--teal)">'+esc(e.to)+'</td></tr>').join(''):'<tr><td colspan="4" class="cempty">Belum ada perubahan tercatat.</td></tr>';}
+
+/* ---------- init ---------- */
+(async function init(){
+  const rankSel=document.getElementById('rank');Object.keys(M.rank_adj).forEach(r=>{const o=document.createElement('option');o.value=r;o.textContent=r;rankSel.appendChild(o);});rankSel.value='Unranked';
+  document.querySelectorAll('#premier button').forEach(b=>b.addEventListener('click',()=>setPremier(parseInt(b.dataset.v))));
+  document.querySelectorAll('#acctType button').forEach(b=>b.addEventListener('click',()=>setAcctType(b.dataset.v)));
+  ['skins','rank','source'].forEach(id=>document.getElementById(id).addEventListener('input',calc));
+  document.getElementById('source').addEventListener('change',()=>{sourceHint();calc();});
+  document.querySelectorAll('.cp').forEach(el=>el.addEventListener('click',()=>copyVal(el)));
+  document.getElementById('ovType').addEventListener('change',ovTypeChange);document.getElementById('ovSkin').addEventListener('input',showOvBase);
+  document.getElementById('pinInput').addEventListener('keydown',e=>{if(e.key==='Enter')checkPin();});
+  document.querySelectorAll('.overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('on');}));
+  await loadSettings();applyModel();buildIndex();fillSources();showView('calc');calc();
+  updateInfo();
+  attachSuggest('ovSkin','ovList',showOvBase);attachSuggest('alTo','alList');
+  syncCanonical(false).then(()=>{calc();renderNavDot();document.getElementById('calcStatus').innerHTML='Daftar skin: <b>'+Object.keys(INDEX).length+'</b> nama dikenal'+(Object.keys(CANON).length?' (model + resmi)':' (model saja — API resmi tidak terjangkau)');});
+  renderNavDot();
 })();
 </script>
 </body>
