@@ -310,7 +310,7 @@ var TIERS = ["Ultra","Exclusive","Premium","Deluxe","Select"];
 var DEFAULT_ON = {Ultra:true, Exclusive:true, Premium:true, Deluxe:false, Select:false};
 
 // Urutan tampil di caption: dari Classic sampai Odin, melee paling belakang.
-var WEAPONS = ["Classic","Shorty","Frenzy","Ghost","Sheriff","Stinger","Spectre","Bucky","Judge",
+var WEAPONS = ["Classic","Shorty","Frenzy","Ghost","Bandit","Sheriff","Stinger","Spectre","Bucky","Judge",
   "Bulldog","Guardian","Vandal","Phantom","Marshal","Outlaw","Operator","Ares","Odin"];
 var MELEE_RANK = 99;
 var MELEE = ["Knife","Blade","Blades","Karambit","Axe","Dagger","Sword","Balisong","Katana","Fan",
@@ -812,8 +812,13 @@ var groupOn = {};
 // bukan dinyalakan — kelengkapan tetap yang menentukan nyala atau tidak.
 var ALWAYS_SHOW = /^(VCT|Champions)\b/i;
 
+/* Tema dipakai lebih dulu karena itu satu-satunya penanda yang pasti.
+   Banyak melee bundle namanya lepas dari nama koleksinya — Aemondir punya
+   "Blade of Aemondir", Ayakashi punya "Kogitsune", Aeris punya "Suit of Aeris".
+   Kalau dikunci pakai nama depan, melee-nya terlempar keluar dan bundle-nya
+   selalu terbaca kurang satu. */
 function groupKeyOf(name){
-  return bundleOf(name) || SKIN_THEME[name] || familyOf(name) || null;
+  return SKIN_THEME[name] || bundleOf(name) || familyOf(name) || null;
 }
 
 /* Bundle dinyalakan otomatis hanya kalau akun punya seluruh isinya,
@@ -828,16 +833,20 @@ function detectGroups(){
   var out = {};
   Object.keys(byKey).forEach(function(key){
     var items = byKey[key];
-    // Kelompok satu skin hanya boleh terbentuk kalau namanya memang terdaftar
-    // sebagai bundle di valorant-api. Tanpa syarat ini, skin gratis seperti
-    // Mythmaker Sheriff ikut jadi header "-Mythmaker Sheriff Bundle".
-    var label = bundleOf(items[0]);
-    if(!label && items.length > 1) label = commonPrefix(items);
-    if(!label || label === items[0]) return;
 
     // Semua skin milik akun yang masuk kelompok yang sama
     var owned = allSkins.filter(function(s){ return groupKeyOf(s.name) === key; })
                         .map(function(s){ return s.name; });
+
+    // Nama bundle dicari dari item mana pun, bukan cuma yang pertama, karena
+    // item pertama bisa saja melee yang namanya tidak berawalan nama bundle.
+    var label = null;
+    for(var a = 0; a < owned.length && !label; a++) label = bundleOf(owned[a]);
+    // Kelompok satu skin hanya boleh terbentuk kalau namanya memang terdaftar
+    // sebagai bundle di valorant-api, supaya skin gratis seperti Mythmaker
+    // Sheriff tidak jadi header "-Mythmaker Sheriff Bundle".
+    if(!label && items.length > 1) label = commonPrefix(items);
+    if(!label || label === items[0]) return;
 
     // Ukuran bundle asli = jumlah skin dari tema-tema yang tercakup di kelompok ini
     var themes = {};
