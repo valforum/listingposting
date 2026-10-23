@@ -203,6 +203,7 @@ textarea{resize:vertical;min-height:70px}
 
     <div class="card">
       <h2>4. Skin yang ditampilkan <em id="skinCount"></em></h2>
+      <p class="hint" id="dataStatus" style="margin:0 0 10px">Memuat data referensi dari valorant-api…</p>
       <div class="toolbar">
         <input id="search" placeholder="Cari skin…">
         <select id="sortMode" style="width:auto;flex:none"><option value="tier">Urut: tier</option><option value="weapon">Urut: senjata</option></select>
@@ -313,7 +314,7 @@ var DEFAULT_ON = {Ultra:true, Exclusive:true, Premium:true, Deluxe:false, Select
 var WEAPONS = ["Classic","Shorty","Frenzy","Ghost","Bandit","Sheriff","Stinger","Spectre","Bucky","Judge",
   "Bulldog","Guardian","Vandal","Phantom","Marshal","Outlaw","Operator","Ares","Odin"];
 var MELEE_RANK = 99;
-var MELEE = ["Knife","Blade","Blades","Karambit","Axe","Dagger","Sword","Balisong","Katana","Fan",
+var MELEE = ["Knife","Blade","Blades","Karambit","Axe","Dagger","Sword","Balisong","Katana","Fan","Sigil","Relic","Crowbar","Kunai","Coiler","Splitter","Flamethrower",
   "Hammer","Bat","Claws","Wand","Scythe","Gauntlet","Glove","Chakram","Pickaxe","Spear","Whip",
   "Baton","Cleaver","Machete","Trident","Sickle","Bow","Staff","Fist","Fists","Ring","Puppet"];
 var CUT_WORDS = WEAPONS.concat(MELEE);
@@ -553,6 +554,7 @@ function apply(d, filename){
   });
   bpActs = (inv.battlepasses || []).map(function(b){ return String(b.name || "").trim(); });
   selectionTouched = false;
+  groupOverride = {};        // keputusan manual akun sebelumnya tidak boleh ikut
   rebuildBpSkins();
   applyDefaultSelection();
 
@@ -642,7 +644,7 @@ var THEME_SIZE = {};     // themeUuid -> jumlah skin dalam tema itu
 function loadBundleNames(){
   load("caption:bundles", function(c){
     if(c && c.names && c.t && (Date.now() - c.t) < 7 * 864e5){
-      BUNDLE_NAMES = c.names; renderPicked(); build();
+      BUNDLE_NAMES = c.names; dataStatus(); renderPicked(); build();
     }
   });
   if(typeof fetch !== "function") return;
@@ -658,7 +660,7 @@ function loadBundleNames(){
       if(!names.length) return;
       BUNDLE_NAMES = names;
       save("caption:bundles", {t: Date.now(), names: names});
-      renderPicked(); build();
+      dataStatus(); renderPicked(); build();
     })
     .catch(function(){});
 }
@@ -694,7 +696,27 @@ function loadSkinData(){
 }
 
 // Data tema bisa datang setelah file di-upload; hitung ulang saat itu terjadi.
+function dataStatus(){
+  var el = $("dataStatus"); if(!el) return;
+  var parts = [], missing = [];
+  (BUNDLE_NAMES.length ? parts : missing).push("bundle " + BUNDLE_NAMES.length);
+  var nSkin = Object.keys(SKIN_THEME).length;
+  (nSkin ? parts : missing).push("skin " + nSkin);
+  (BP_PASSES.length ? parts : missing).push("battle pass " + BP_PASSES.length);
+  var nAg = Object.keys(AGENT_SKIN_ALL).length;
+  (nAg ? parts : missing).push("skin agent " + nAg);
+  if(missing.length){
+    el.style.color = "var(--warn)";
+    el.textContent = "Data referensi belum lengkap (" + missing.join(", ") + ") — " +
+      "deteksi bundle & BP belum bisa dipercaya. Tunggu sebentar atau muat ulang halaman.";
+  } else {
+    el.style.color = "";
+    el.textContent = "Data referensi siap: " + parts.join(" · ") + ".";
+  }
+}
+
 function afterSkinData(){
+  dataStatus();
   if(rawPasses.length && !BP_PASSES.length && Object.keys(LVL_SKIN).length){
     rebuildPasses(null); return;
   }
@@ -805,12 +827,38 @@ function commonPrefix(names){
   return parts.join(" ");
 }
 
-var groupOn = {};
+/* Keputusan "bundle nyala atau tidak" dibagi dua lapis:
+   - auto   : dihitung ulang setiap render dari kelengkapan bundle
+   - override: hanya terisi kalau admin mengklik chip, dan dikosongkan tiap
+               file baru dimuat.
+   Sebelumnya keputusan auto dikunci sekali di groupOn dan tidak pernah
+   di-reset, jadi bundle yang lengkap di akun A ikut nyala di akun B yang
+   cuma punya dua skinnya. */
+var groupOverride = {};
+function groupIsOn(key, auto){
+  return groupOverride[key] !== undefined ? !!groupOverride[key] : !!auto;
+}
 
 // Nama-nama ini pasti bundle beli, jadi chip-nya selalu ditampilkan walau
 // akun cuma punya satu skin dan bundle-nya belum lengkap. Ditampilkan saja,
 // bukan dinyalakan — kelengkapan tetap yang menentukan nyala atau tidak.
 var ALWAYS_SHOW = /^(VCT|Champions)\b/i;
+
+/* Kapsul tim VCT (VCT25 x RRQ, VCT26 x NRG, ...) adalah bundle berisi satu
+   skin. Di data Riot tema-temanya sering digabung jadi satu, jadi hitungan
+   kelengkapan lewat tema tidak bisa dipakai — dikunci lewat nama saja dan
+   dianggap lengkap selama skinnya ada. */
+// Hanya yang berangka tahun (VCT25 x RRQ, VCT 2026 Sigil); "VCT LOCK//IN"
+// adalah bundle biasa berisi beberapa skin, jadi tetap lewat hitungan tema.
+var VCT_RE = /^VCT\s*\d{2,4}\b/i;
+function vctLabel(name){
+  if(!VCT_RE.test(name)) return null;
+  var fam = familyOf(name);
+  if(fam) return fam;
+  // nama melee tanpa kata senjata yang dikenal: buang kata terakhir
+  var w = name.split(" ");
+  return w.length > 2 ? w.slice(0, -1).join(" ") : name;
+}
 
 /* Tema dipakai lebih dulu karena itu satu-satunya penanda yang pasti.
    Banyak melee bundle namanya lepas dari nama koleksinya — Aemondir punya
@@ -818,6 +866,8 @@ var ALWAYS_SHOW = /^(VCT|Champions)\b/i;
    Kalau dikunci pakai nama depan, melee-nya terlempar keluar dan bundle-nya
    selalu terbaca kurang satu. */
 function groupKeyOf(name){
+  var vct = vctLabel(name);
+  if(vct) return "vct:" + vct;
   return SKIN_THEME[name] || bundleOf(name) || familyOf(name) || null;
 }
 
@@ -838,9 +888,11 @@ function detectGroups(){
     var owned = allSkins.filter(function(s){ return groupKeyOf(s.name) === key; })
                         .map(function(s){ return s.name; });
 
+    var isVct = key.indexOf("vct:") === 0;
+
     // Nama bundle dicari dari item mana pun, bukan cuma yang pertama, karena
     // item pertama bisa saja melee yang namanya tidak berawalan nama bundle.
-    var label = null;
+    var label = isVct ? key.slice(4) : null;
     for(var a = 0; a < owned.length && !label; a++) label = bundleOf(owned[a]);
     // Kelompok satu skin hanya boleh terbentuk kalau namanya memang terdaftar
     // sebagai bundle di valorant-api, supaya skin gratis seperti Mythmaker
@@ -853,7 +905,10 @@ function detectGroups(){
     owned.forEach(function(n){ if(SKIN_THEME[n]) themes[SKIN_THEME[n]] = 1; });
     var total = Object.keys(themes).reduce(function(a, t){ return a + (THEME_SIZE[t] || 0); }, 0);
 
-    var complete = total > 0 && owned.length >= total;
+    var complete;
+    if(isVct){ total = owned.length; complete = true; }
+    else complete = total > 0 && owned.length >= total;
+
     var alwaysShow = ALWAYS_SHOW.test(label);
 
     // Skin tunggal dari bundle yang belum lengkap tidak usah bikin chip,
@@ -862,9 +917,9 @@ function detectGroups(){
 
     out[key] = {
       label: label, items: items, owned: owned.length,
-      total: total, complete: complete
+      total: total, complete: complete, forced: isVct,
+      on: groupIsOn(key, complete)
     };
-    if(groupOn[key] === undefined) groupOn[key] = complete;
   });
   return out;
 }
@@ -872,7 +927,7 @@ function detectGroups(){
 function layout(){
   var map = detectGroups();
   var keys = Object.keys(map)
-    .filter(function(k){ return groupOn[k]; })
+    .filter(function(k){ return map[k].on; })
     .sort(function(a, b){ return map[a].label.localeCompare(map[b].label); });
   var used = {};
   keys.forEach(function(k){ map[k].items.forEach(function(sk){ used[sk] = 1; }); });
@@ -1159,14 +1214,17 @@ function renderPicked(){
       btn.className = "chip" + (g.complete ? "" : " partial");
       btn.type = "button";
       btn.textContent = g.label + " " + g.owned + (g.total ? "/" + g.total : "");
-      btn.title = g.total
-        ? (g.complete
-            ? "Bundle lengkap — dikelompokkan"
-            : "Kurang " + (g.total - g.owned) + " skin, jadi masuk eceran. Klik kalau tetap mau dikelompokkan.")
-        : "Jumlah isi bundle belum diketahui — putuskan manual";
-      btn.setAttribute("aria-pressed", String(!!groupOn[k]));
+      var manual = groupOverride[k] !== undefined ? " (diubah manual)" : "";
+      btn.title = (g.forced
+        ? "Kapsul VCT — bundle satu skin, selalu dikelompokkan"
+        : g.total
+          ? (g.complete
+              ? "Bundle lengkap — dikelompokkan"
+              : "Kurang " + (g.total - g.owned) + " skin, jadi masuk eceran. Klik kalau tetap mau dikelompokkan.")
+          : "Jumlah isi bundle belum diketahui — data skin belum termuat") + manual;
+      btn.setAttribute("aria-pressed", String(!!g.on));
       btn.addEventListener("click", function(){
-        groupOn[k] = !groupOn[k]; renderPicked(); build();
+        groupOverride[k] = !g.on; renderPicked(); build();
       });
       chipBox.appendChild(btn);
     });
@@ -1528,6 +1586,7 @@ $("importFile").addEventListener("change", function(e){
 });
 
 /* ---------- boot ---------- */
+dataStatus();
 loadBundleNames();
 loadSkinData();
 loadContracts();
